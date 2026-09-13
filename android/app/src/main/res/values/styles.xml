@@ -1,0 +1,9 @@
+<resources>
+    <style name="Theme.Wigglefish" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:colorAccent">#FF4FD8</item>
+        <item name="android:navigationBarColor">#050611</item>
+        <item name="android:statusBarColor">#050611</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>

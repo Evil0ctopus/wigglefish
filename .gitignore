@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+firmware/build/
+firmware/sdkconfig
+firmware/sdkconfig.old
+android/.gradle/
+android/.kotlin/
+android/build/
+android/local.properties
+android/app/build/
+tools/android-sdk/
+tools/gradle-*/
+tools/*.zip
