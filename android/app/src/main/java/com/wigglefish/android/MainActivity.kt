@@ -235,7 +235,7 @@ class MainActivity : AppCompatActivity() {
     private fun connect(device: android.hardware.usb.UsbDevice) {
         if (serial.connect(device)) {
             connectButton.text = "CONNECTED"
-            connectedUsbLabel = "${device.deviceName} VID %04X PID %04X".format(device.vendorId, device.productId)
+            connectedUsbLabel = "${UsbSerialController.friendlyName(device)} VID %04X PID %04X".format(device.vendorId, device.productId)
             deviceText.text = "USB DEVICE  $connectedUsbLabel"
             logUsbEvent("connected")
         }

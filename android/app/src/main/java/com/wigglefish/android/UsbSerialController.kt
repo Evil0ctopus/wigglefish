@@ -14,6 +14,19 @@ class UsbSerialController(
     companion object {
         const val vendorId = 0x1A86
         const val productId = 0x55D3
+
+        fun friendlyName(device: UsbDevice): String {
+            return when (device.vendorId to device.productId) {
+                0x303A to 0x1001 -> "Espressif ESP32 native USB/JTAG"
+                0x1A86 to 0x7523 -> "WCH CH340 USB-serial (CYD likely)"
+                0x1A86 to 0x55D3 -> "WCH CH343 USB-serial"
+                0x1A86 to 0x55D4 -> "WCH CH340 USB-serial"
+                0x10C4 to 0xEA60 -> "Silicon Labs CP210x USB-serial"
+                0x0403 to 0x6001 -> "FTDI USB-serial"
+                0x0483 to 0x5740 -> "Flipper Zero USB serial"
+                else -> device.productName ?: device.manufacturerName ?: "Unknown USB serial device"
+            }
+        }
     }
 
     private var connection: UsbDeviceConnection? = null
