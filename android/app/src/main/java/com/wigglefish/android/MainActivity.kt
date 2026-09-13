@@ -357,7 +357,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             } catch (_: Exception) {
-                // Boot logs are not JSON; ignore them while waiting for survey events.
+                LegacySerialParser.parse(line)?.let { handleLine(it.toString()) }
             }
         }
     }
