@@ -1,5 +1,7 @@
 # wigglefish
 
+Android + ESP32-C5 passive wardriving integration app.
+
 A small, read-only tool for finding out what devices are connected to serial/COM ports.
 
 ## Setup
@@ -35,4 +37,3 @@ idf.py -C firmware -p COM11 flash monitor
 ## Android controller
 
 The `android` directory contains a native Android controller for the Galaxy S26 Ultra. It detects the CH343 over USB-C OTG, requests permission, connects at 115200 baud, and displays the firmware's automatic passive survey stream.
-```

@@ -14,3 +14,4 @@ android/app/build/
 tools/android-sdk/
 tools/gradle-*/
 tools/*.zip
+eim_config.toml
