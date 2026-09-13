@@ -35,6 +35,7 @@ android/       Native Android USB controller and field UI
 firmware/      ESP-IDF ESP32-C5 passive scanner
 src/           Python serial inspection and metadata models
 tests/         Python regression tests
+web/           Browser Web Serial launcher and dashboard
 ```
 
 ## ESP32-C5 Firmware
@@ -84,6 +85,12 @@ python -m pip install -e .
 wigglefish ports
 wigglefish scan --wifi --ble --wardrivego
 ```
+
+## Web Launcher
+
+The `web` directory is a static browser dashboard for compatible ESP32 serial scanners. It uses Web Serial at 115200 baud and shows live Wi-Fi/BLE/GPS records, a radar view, transient signal decode animation, and CSV export.
+
+Open it from a secure origin such as GitHub Pages or localhost in Chrome/Edge, then choose **CONNECT SERIAL** and select the ESP32 serial port. The board must already be running firmware that emits the Wigglefish newline-delimited JSON protocol.
 
 ## Tests
 

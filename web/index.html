@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wigglefish // Web Launcher</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <p class="eyebrow">WIGGLEFISH // WEB LAUNCHER</p>
+      <h1>PASSIVE SIGNAL FIELD</h1>
+      <p class="subhead">Connect a compatible ESP32 serial scanner and monitor Wi-Fi, BLE, and GPS telemetry in the browser.</p>
+      <div class="actions">
+        <button id="connectButton" class="primary">CONNECT SERIAL</button>
+        <button id="clearButton">CLEAR FIELD</button>
+        <button id="exportButton">EXPORT CSV</button>
+      </div>
+      <p id="status" class="status">OFFLINE // waiting for serial device</p>
+    </header>
+
+    <section class="metrics" aria-label="signal counters">
+      <article><strong id="wifiCount">0</strong><span>WI-FI</span></article>
+      <article><strong id="bleCount">0</strong><span>BLE</span></article>
+      <article><strong id="gpsCount">0</strong><span>GPS SAT</span></article>
+      <article><strong id="recordCount">0</strong><span>RECORDS</span></article>
+    </section>
+
+    <section class="radar-panel">
+      <div class="section-label">// ACTIVE RADAR</div>
+      <canvas id="radar" width="900" height="300" aria-label="animated passive signal radar"></canvas>
+      <div id="decode" class="decode" aria-live="polite"></div>
+    </section>
+
+    <section class="field-grid">
+      <div>
+        <div class="section-label">// CHANNEL ACTIVITY</div>
+        <pre id="channels">No channel activity yet</pre>
+      </div>
+      <div>
+        <div class="section-label">// LIVE OBSERVATIONS</div>
+        <pre id="records">Waiting for passive observations...</pre>
+      </div>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+:root { color-scheme: dark; --bg:#050611; --panel:#0c1026; --cyan:#8ff7ff; --pink:#ff4fd8; --amber:#f0b35a; --muted:#7187a6; }
+* { box-sizing:border-box; }
+body { margin:0; min-height:100vh; background:radial-gradient(circle at 50% 0%,#17133c 0,#050611 48%); color:#f4f7ff; font-family:"Courier New",monospace; }
+body::before { content:""; position:fixed; inset:0; pointer-events:none; opacity:.2; background:repeating-linear-gradient(0deg,transparent 0 3px,rgba(143,247,255,.08) 4px); }
+.shell { width:min(1180px,100%); margin:auto; padding:28px; }
+.hero { border:1px solid rgba(143,247,255,.45); padding:24px; background:rgba(7,11,30,.8); box-shadow:0 0 35px rgba(255,79,216,.12); }
+.eyebrow,.section-label { color:var(--amber); letter-spacing:.12em; font-size:.78rem; }
+h1 { margin:8px 0; color:var(--pink); letter-spacing:.08em; font-size:clamp(1.6rem,5vw,3.4rem); }
+.subhead { color:var(--cyan); max-width:720px; line-height:1.5; }
+.actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:22px; }
+button { min-height:44px; padding:0 18px; border:1px solid var(--cyan); background:#111633; color:var(--cyan); font:inherit; cursor:pointer; }
+button:hover { background:#1c2850; box-shadow:0 0 18px rgba(143,247,255,.35); }
+button.primary { color:#050611; border-color:var(--pink); background:var(--pink); }
+.status { color:var(--muted); font-size:.78rem; }
+.metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:14px 0; }
+.metrics article { padding:16px; background:rgba(16,20,43,.9); border-left:3px solid var(--cyan); }
+.metrics article:nth-child(2) { border-color:var(--pink); }.metrics article:nth-child(3) { border-color:var(--amber); }
+.metrics strong { display:block; font-size:1.8rem; color:var(--cyan); }.metrics span { color:var(--muted); font-size:.72rem; }
+.radar-panel,.field-grid>div { background:rgba(10,13,32,.86); border:1px solid rgba(143,247,255,.3); padding:16px; }
+#radar { width:100%; height:300px; display:block; }
+.decode { min-height:24px; color:var(--pink); text-align:center; }
+.field-grid { display:grid; grid-template-columns:1fr 1.6fr; gap:14px; margin-top:14px; }
+pre { min-height:150px; white-space:pre-wrap; color:#d6d9ff; line-height:1.65; overflow:auto; }
+@media (max-width:700px) { .shell{padding:14px}.metrics{grid-template-columns:repeat(2,1fr)}.field-grid{grid-template-columns:1fr} }
