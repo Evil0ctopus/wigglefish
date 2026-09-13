@@ -21,15 +21,19 @@ class UsbSerialController(
     private var reader: Thread? = null
     @Volatile private var running = false
 
-    fun findDevice(): UsbDevice? = usbManager.deviceList.values.firstOrNull {
-        it.vendorId == vendorId && it.productId == productId
+    fun findDevice(): UsbDevice? {
+        val devices = usbManager.deviceList.values.toList()
+        val preferred = devices.filter { it.vendorId == vendorId && it.productId == productId }
+        return (preferred + devices.filterNot { preferred.contains(it) }).firstOrNull { device ->
+            UsbSerialProber.getDefaultProber().probeDevice(device)?.ports?.isNotEmpty() == true
+        }
     }
 
     fun connect(device: UsbDevice): Boolean {
         disconnect()
         val driver = UsbSerialProber.getDefaultProber().probeDevice(device)
             ?: run {
-                onState("CH343 driver not recognized")
+                onState("USB serial driver not recognized")
                 return false
             }
         val selectedPort = driver.ports.firstOrNull()
