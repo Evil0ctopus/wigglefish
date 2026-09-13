@@ -12,10 +12,11 @@ This native Android app connects to the ESP32-C5 through USB-C OTG and the CH343
 - Displays Wi-Fi and BLE observations with separate live counters.
 - Accepts the firmware's `type: "wifi"` and Wardrive Go-compatible `type: "bluetooth"` records.
 - Normalizes common legacy text scan lines containing SSID/BSSID/MAC/RSSI fields from other passive firmware families.
+- Parses WiGLE-style CSV rows used by HaleHound-style ESP32 CYD builds when those rows are streamed or imported.
 
 The survey is passive and intended for networks you are authorized to observe. The app does not join networks or send disruptive wireless frames.
 
-The compatibility parser is intentionally metadata-only. It does not interpret attack commands, credentials, handshakes, portals, or private payloads.
+The compatibility parser is intentionally metadata-only. It does not interpret attack commands, credentials, handshakes, portals, or private payloads. HaleHound deployments that only save CSV to a microSD card still need the CSV file transferred to the phone; the app cannot read another board's SD card through a serial connection automatically.
 
 ## Build
 

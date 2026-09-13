@@ -10,6 +10,7 @@ object LegacySerialParser {
     private val namePattern = Regex("(?i)(?:name|device)\\s*[:=]\\s*([^,|;]+)")
 
     fun parse(line: String): JSONObject? {
+        parseCsvRow(line)?.let { return it }
         val address = macPattern.find(line)?.value ?: return null
         val rssi = rssiPattern.find(line)?.groupValues?.getOrNull(1)?.toIntOrNull() ?: return null
         val channel = channelPattern.find(line)?.groupValues?.getOrNull(1)?.toIntOrNull()
@@ -29,6 +30,24 @@ object LegacySerialParser {
                 put("channel", channel ?: 0)
                 put("security", "LEGACY_SERIAL")
             }
+            put("rssi", rssi)
+        }
+    }
+
+    private fun parseCsvRow(line: String): JSONObject? {
+        if (!line.contains(',')) return null
+        val fields = line.split(',').map { it.trim().trim('"') }
+        if (fields.size < 6 || !macPattern.matches(fields[0])) return null
+        val channel = fields.getOrNull(4)?.toIntOrNull() ?: return null
+        val rssi = fields.getOrNull(5)?.toIntOrNull() ?: return null
+        return JSONObject().apply {
+            put("type", "wifi")
+            put("source", "HALEHOUND_CSV")
+            put("bssid", fields[0])
+            put("ssid", fields[1])
+            put("security", fields[2])
+            put("encryption", fields[2])
+            put("channel", channel)
             put("rssi", rssi)
         }
     }
