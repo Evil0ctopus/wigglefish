@@ -13,6 +13,7 @@ This native Android app connects to the ESP32-C5 through USB-C OTG and the CH343
 - Accepts the firmware's `type: "wifi"` and Wardrive Go-compatible `type: "bluetooth"` records.
 - Normalizes common legacy text scan lines containing SSID/BSSID/MAC/RSSI fields from other passive firmware families.
 - Parses WiGLE-style CSV rows used by HaleHound-style ESP32 CYD builds when those rows are streamed or imported.
+- Keeps a separate USB-device JSONL audit log for connected-board events and passive board observations.
 
 The survey is passive and intended for networks you are authorized to observe. The app does not join networks or send disruptive wireless frames.
 

@@ -68,6 +68,8 @@ class MainActivity : AppCompatActivity() {
     private var lastDecodedSatelliteCount = -1
     private val sourceCounts = linkedMapOf<String, Int>()
     private val sessionLogFile by lazy { File(filesDir, "wigglefish-session.jsonl") }
+    private val usbLogFile by lazy { File(filesDir, "wigglefish-usb-devices.jsonl") }
+    private var connectedUsbLabel = ""
     private val uiHandler = Handler(Looper.getMainLooper())
     private val decodeQueue = ArrayDeque<DecodeJob>()
     private var decodeRunning = false
@@ -188,6 +190,7 @@ class MainActivity : AppCompatActivity() {
             rawRecords.clear()
             sourceCounts.clear()
             sessionLogFile.delete()
+            usbLogFile.delete()
             decodeQueue.clear()
             decodeRunning = false
             scanPasses = 0
@@ -232,7 +235,9 @@ class MainActivity : AppCompatActivity() {
     private fun connect(device: android.hardware.usb.UsbDevice) {
         if (serial.connect(device)) {
             connectButton.text = "CONNECTED"
-            deviceText.text = "USB DEVICE  ${device.deviceName}   VID %04X  PID %04X".format(device.vendorId, device.productId)
+            connectedUsbLabel = "${device.deviceName} VID %04X PID %04X".format(device.vendorId, device.productId)
+            deviceText.text = "USB DEVICE  $connectedUsbLabel"
+            logUsbEvent("connected")
         }
     }
 
@@ -487,6 +492,22 @@ class MainActivity : AppCompatActivity() {
         val source = message.optString("source", "UNKNOWN")
         sourceCounts[source] = (sourceCounts[source] ?: 0) + 1
         sessionLogFile.appendText("${System.currentTimeMillis()} ${message}\n")
+        if (source != "PHONE") {
+            val usbRecord = JSONObject(message.toString()).apply {
+                put("usb_device", connectedUsbLabel)
+                put("log_type", "usb_observation")
+            }
+            usbLogFile.appendText("${System.currentTimeMillis()} $usbRecord\n")
+        }
+    }
+
+    private fun logUsbEvent(event: String) {
+        val record = JSONObject().apply {
+            put("log_type", "usb_device")
+            put("event", event)
+            put("device", connectedUsbLabel)
+        }
+        usbLogFile.appendText("${System.currentTimeMillis()} $record\n")
     }
 
     private fun categorySummary(): String {
@@ -514,7 +535,11 @@ class MainActivity : AppCompatActivity() {
     private fun setStatus(status: String) {
         runOnUiThread {
             statusText.text = status
-            if (status.contains("USB connection lost", true)) deviceText.text = "USB DEVICE  DISCONNECTED"
+            if (status.contains("USB connection lost", true)) {
+                logUsbEvent("disconnected")
+                deviceText.text = "USB DEVICE  DISCONNECTED"
+                connectedUsbLabel = ""
+            }
         }
     }
 }
