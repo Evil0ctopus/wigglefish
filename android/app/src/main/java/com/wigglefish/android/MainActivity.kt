@@ -49,6 +49,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var locationText: TextView
     private lateinit var sourceText: TextView
     private lateinit var deviceText: TextView
+    private lateinit var phoneCollectionButton: Button
+    private lateinit var usbCollectionButton: Button
     private lateinit var connectButton: Button
     private lateinit var usbManager: UsbManager
     private lateinit var serial: UsbSerialController
@@ -66,6 +68,8 @@ class MainActivity : AppCompatActivity() {
     private var selectedView = "ALL"
     private var lastLocation: Location? = null
     private var lastDecodedSatelliteCount = -1
+    private var phoneCollectionEnabled = true
+    private var usbCollectionEnabled = true
     private val sourceCounts = linkedMapOf<String, Int>()
     private val sessionLogFile by lazy { File(filesDir, "wigglefish-session.jsonl") }
     private val usbLogFile by lazy { File(filesDir, "wigglefish-usb-devices.jsonl") }
@@ -164,6 +168,8 @@ class MainActivity : AppCompatActivity() {
         locationText = findViewById(R.id.locationText)
         sourceText = findViewById(R.id.sourceText)
         deviceText = findViewById(R.id.deviceText)
+        phoneCollectionButton = findViewById(R.id.phoneCollectionButton)
+        usbCollectionButton = findViewById(R.id.usbCollectionButton)
         connectButton = findViewById(R.id.connectButton)
         usbManager = getSystemService(USB_SERVICE) as UsbManager
         locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
@@ -178,6 +184,8 @@ class MainActivity : AppCompatActivity() {
             registerReceiver(usbReceiver, IntentFilter(permissionAction))
         }
         connectButton.setOnClickListener { requestConnection() }
+        phoneCollectionButton.setOnClickListener { togglePhoneCollection() }
+        usbCollectionButton.setOnClickListener { toggleUsbCollection() }
         findViewById<Button>(R.id.exportButton).setOnClickListener { shareSession() }
         findViewById<Button>(R.id.csvButton).setOnClickListener { shareCsv() }
         findViewById<Button>(R.id.allButton).setOnClickListener { selectedView = "ALL"; renderNetworks() }
@@ -233,12 +241,43 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun connect(device: android.hardware.usb.UsbDevice) {
+        if (!usbCollectionEnabled) return
         if (serial.connect(device)) {
             connectButton.text = "CONNECTED"
             connectedUsbLabel = "${UsbSerialController.friendlyName(device)} VID %04X PID %04X".format(device.vendorId, device.productId)
             deviceText.text = "USB DEVICE  $connectedUsbLabel"
             logUsbEvent("connected")
         }
+    }
+
+    private fun togglePhoneCollection() {
+        phoneCollectionEnabled = !phoneCollectionEnabled
+        if (phoneCollectionEnabled) {
+            startPhoneLocation()
+            startPhoneWireless()
+        } else {
+            stopPhoneLocation()
+            stopPhoneWireless()
+            phoneCollectionButton.text = "PHONE COLLECTION OFF"
+        }
+        updateCollectionButtons()
+    }
+
+    private fun toggleUsbCollection() {
+        usbCollectionEnabled = !usbCollectionEnabled
+        if (usbCollectionEnabled) {
+            requestConnection()
+        } else {
+            serial.disconnect()
+            deviceText.text = "USB DEVICE  COLLECTION OFF"
+            usbCollectionButton.text = "USB COLLECTION OFF"
+        }
+        updateCollectionButtons()
+    }
+
+    private fun updateCollectionButtons() {
+        phoneCollectionButton.text = if (phoneCollectionEnabled) "PHONE COLLECTION ON" else "PHONE COLLECTION OFF"
+        usbCollectionButton.text = if (usbCollectionEnabled) "USB COLLECTION ON" else "USB COLLECTION OFF"
     }
 
     private fun startPhoneLocation() {

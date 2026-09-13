@@ -123,6 +123,36 @@
         android:textSize="11sp"
         android:fontFamily="monospace" />
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/phoneCollectionButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:minHeight="44dp"
+            android:text="PHONE COLLECTION ON"
+            android:textSize="10sp"
+            android:textColor="#050611"
+            android:backgroundTint="#8FF7FF" />
+
+        <Button
+            android:id="@+id/usbCollectionButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:minHeight="44dp"
+            android:text="USB COLLECTION ON"
+            android:textSize="10sp"
+            android:textColor="#050611"
+            android:backgroundTint="#FF4FD8" />
+    </LinearLayout>
+
     <TextView
         android:id="@+id/sessionText"
         android:layout_width="match_parent"
