@@ -24,6 +24,7 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import java.io.File
 import java.util.Locale
 import org.json.JSONArray
 import org.json.JSONObject
@@ -46,6 +47,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var decodeText: TextView
     private lateinit var strongestText: TextView
     private lateinit var locationText: TextView
+    private lateinit var sourceText: TextView
     private lateinit var connectButton: Button
     private lateinit var usbManager: UsbManager
     private lateinit var serial: UsbSerialController
@@ -63,6 +65,8 @@ class MainActivity : AppCompatActivity() {
     private var selectedView = "ALL"
     private var lastLocation: Location? = null
     private var lastDecodedSatelliteCount = -1
+    private val sourceCounts = linkedMapOf<String, Int>()
+    private val sessionLogFile by lazy { File(filesDir, "wigglefish-session.jsonl") }
     private val uiHandler = Handler(Looper.getMainLooper())
     private val decodeQueue = ArrayDeque<DecodeJob>()
     private var decodeRunning = false
@@ -155,6 +159,7 @@ class MainActivity : AppCompatActivity() {
         decodeText = findViewById(R.id.decodeText)
         strongestText = findViewById(R.id.strongestText)
         locationText = findViewById(R.id.locationText)
+        sourceText = findViewById(R.id.sourceText)
         connectButton = findViewById(R.id.connectButton)
         usbManager = getSystemService(USB_SERVICE) as UsbManager
         locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
@@ -179,6 +184,8 @@ class MainActivity : AppCompatActivity() {
             bleRecords.clear()
             wifiChannels.clear()
             rawRecords.clear()
+            sourceCounts.clear()
+            sessionLogFile.delete()
             decodeQueue.clear()
             decodeRunning = false
             scanPasses = 0
@@ -313,6 +320,8 @@ class MainActivity : AppCompatActivity() {
         runOnUiThread {
             try {
                 val message = JSONObject(line)
+                if (message.has("type") && !message.has("source")) message.put("source", "ESP32_SERIAL")
+                if (message.has("type")) logObservation(message)
                 when (message.optString("event")) {
                     "ready" -> setStatus("Ready. Passive survey is running automatically.")
                     "scan_start" -> {
@@ -369,6 +378,7 @@ class MainActivity : AppCompatActivity() {
         categoryText.text = categorySummary()
         radarView.setSignalCount(rawRecords.size)
         strongestText.text = strongestSignalSummary()
+        sourceText.text = sourceCounts.entries.joinToString("   ") { "${it.key} ${it.value}" }
         val lastSeen = if (lastObservationAt == 0L) "waiting" else "live"
         sessionText.text = "SESSION  %02d passes   %d records   %s".format(scanPasses, rawRecords.size, lastSeen)
         spectrumText.text = if (wifiChannels.isEmpty()) {
@@ -467,6 +477,12 @@ class MainActivity : AppCompatActivity() {
             strongest.optString("name").ifEmpty { strongest.optString("mac") }
         }
         return "SIGNAL LOCK  $type   ${strongest.optInt("rssi")} dBm   $name"
+    }
+
+    private fun logObservation(message: JSONObject) {
+        val source = message.optString("source", "UNKNOWN")
+        sourceCounts[source] = (sourceCounts[source] ?: 0) + 1
+        sessionLogFile.appendText("${System.currentTimeMillis()} ${message}\n")
     }
 
     private fun categorySummary(): String {

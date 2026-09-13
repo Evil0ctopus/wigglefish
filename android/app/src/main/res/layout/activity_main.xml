@@ -104,6 +104,16 @@
         android:fontFamily="monospace" />
 
     <TextView
+        android:id="@+id/sourceText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:text="ESP32_SERIAL 0   PHONE 0   LEGACY_SERIAL 0"
+        android:textColor="#FF4FD8"
+        android:textSize="11sp"
+        android:fontFamily="monospace" />
+
+    <TextView
         android:id="@+id/sessionText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
