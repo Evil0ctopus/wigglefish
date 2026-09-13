@@ -114,6 +114,16 @@
         android:fontFamily="monospace" />
 
     <TextView
+        android:id="@+id/deviceText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:text="USB DEVICE  NO USB DEVICE"
+        android:textColor="#8FF7FF"
+        android:textSize="11sp"
+        android:fontFamily="monospace" />
+
+    <TextView
         android:id="@+id/sessionText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

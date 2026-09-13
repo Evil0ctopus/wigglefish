@@ -48,6 +48,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var strongestText: TextView
     private lateinit var locationText: TextView
     private lateinit var sourceText: TextView
+    private lateinit var deviceText: TextView
     private lateinit var connectButton: Button
     private lateinit var usbManager: UsbManager
     private lateinit var serial: UsbSerialController
@@ -160,6 +161,7 @@ class MainActivity : AppCompatActivity() {
         strongestText = findViewById(R.id.strongestText)
         locationText = findViewById(R.id.locationText)
         sourceText = findViewById(R.id.sourceText)
+        deviceText = findViewById(R.id.deviceText)
         connectButton = findViewById(R.id.connectButton)
         usbManager = getSystemService(USB_SERVICE) as UsbManager
         locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
@@ -209,6 +211,7 @@ class MainActivity : AppCompatActivity() {
     private fun requestConnection() {
         val device = serial.findDevice()
         if (device == null) {
+            deviceText.text = "USB DEVICE  NO USB DEVICE"
             setStatus("ESP32-C5 / CH343 not found. Connect it with USB OTG.")
             return
         }
@@ -229,6 +232,7 @@ class MainActivity : AppCompatActivity() {
     private fun connect(device: android.hardware.usb.UsbDevice) {
         if (serial.connect(device)) {
             connectButton.text = "CONNECTED"
+            deviceText.text = "USB DEVICE  ${device.deviceName}   VID %04X  PID %04X".format(device.vendorId, device.productId)
         }
     }
 
@@ -508,6 +512,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setStatus(status: String) {
-        runOnUiThread { statusText.text = status }
+        runOnUiThread {
+            statusText.text = status
+            if (status.contains("USB connection lost", true)) deviceText.text = "USB DEVICE  DISCONNECTED"
+        }
     }
 }
