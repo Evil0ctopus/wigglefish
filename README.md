@@ -101,3 +101,9 @@ python -m pytest -q
 ## Notes
 
 Device categories in the Android UI are heuristics based on visible names, addresses, and metadata. They are labels for investigation, not guaranteed device identification. GPS data is optional and comes from Android's location APIs; the ESP32-C5 does not provide GPS by itself.
+
+## ☕ Support My Work
+
+If you find this firmware or my open-source security tools helpful, consider supporting future development and late-night coding sessions!
+
+[![PayPal](https://img.shields.io/badge/PayPal-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://paypal.me/Evil0ctopus)
