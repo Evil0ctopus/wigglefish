@@ -1,9 +1,14 @@
 """Command-line interface for wigglefish."""
 
+from __future__ import annotations
+
 import argparse
-import json
+import sys
+
+from serial import SerialException
 
 from .ports import discover_ports
+from .serial_ingest import DEFAULT_BAUD, DEFAULT_DURATION_SECONDS, read_passive_serial
 from .survey import BleObservation, WifiObservation, scan_passive
 
 
@@ -19,7 +24,18 @@ def build_parser() -> argparse.ArgumentParser:
 
     scan_parser = subparsers.add_parser(
         "scan",
-        help="passive Wi‑Fi and BLE metadata scan",
+        help="passive Wi‑Fi and BLE metadata scan (demo by default; opt-in serial)",
+        description=(
+            "By default, scan emits built-in demo/stub metadata so the export "
+            "formats can be exercised without hardware. Pass --serial PORT to "
+            "passively read the ESP32 newline-delimited JSON stream (115200 baud, "
+            "read-only; no commands are written)."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            "Real field capture today is Android + ESP32-C5 USB serial. "
+            "Python --serial is a bounded, passive metadata ingest of that same stream."
+        ),
     )
     scan_parser.set_defaults(command="scan")
     scan_parser.add_argument("--wifi", action="store_true", help="include Wi‑Fi metadata")
@@ -29,6 +45,27 @@ def build_parser() -> argparse.ArgumentParser:
         "--wardrivego",
         action="store_true",
         help="emit Wardrive Go-style metadata entries",
+    )
+    scan_parser.add_argument(
+        "--serial",
+        metavar="PORT",
+        help=(
+            "passively ingest ESP32 NDJSON from PORT (read-only). "
+            "Without this flag, scan uses demo/stub observations."
+        ),
+    )
+    scan_parser.add_argument(
+        "--duration",
+        type=float,
+        default=DEFAULT_DURATION_SECONDS,
+        metavar="SECONDS",
+        help=f"seconds to listen when using --serial (default: {DEFAULT_DURATION_SECONDS:g})",
+    )
+    scan_parser.add_argument(
+        "--baud",
+        type=int,
+        default=DEFAULT_BAUD,
+        help=f"serial baud rate for --serial (default: {DEFAULT_BAUD})",
     )
 
     parser.set_defaults(command="ports")
@@ -63,9 +100,13 @@ def _show_ports() -> int:
     return 0
 
 
-def _show_scan(args: argparse.Namespace) -> int:
-    wifi = []
-    if args.wifi:
+def _demo_observations(
+    include_wifi: bool,
+    include_ble: bool,
+) -> tuple[list[WifiObservation], list[BleObservation]]:
+    wifi: list[WifiObservation] = []
+    ble: list[BleObservation] = []
+    if include_wifi:
         wifi = [
             WifiObservation(
                 ssid="HomeNet",
@@ -76,8 +117,7 @@ def _show_scan(args: argparse.Namespace) -> int:
                 vendor="Example Wi‑Fi AP",
             )
         ]
-    ble = []
-    if args.ble:
+    if include_ble:
         ble = [
             BleObservation(
                 address="11:22:33:44:55:66",
@@ -87,6 +127,35 @@ def _show_scan(args: argparse.Namespace) -> int:
                 manufacturer_data={"0x004C": "4C 00 00 00"},
             )
         ]
+    return wifi, ble
+
+
+def _show_scan(args: argparse.Namespace) -> int:
+    include_wifi = args.wifi
+    include_ble = args.ble
+    # Serial mode defaults to both radios when the caller did not filter.
+    if args.serial and not include_wifi and not include_ble:
+        include_wifi = True
+        include_ble = True
+
+    source_label = "demo/stub"
+    if args.serial:
+        source_label = f"serial:{args.serial}"
+        try:
+            wifi, ble = read_passive_serial(
+                args.serial,
+                baudrate=args.baud,
+                duration_seconds=args.duration,
+            )
+        except SerialException as error:
+            print(f"Serial ingest failed: {error}", file=sys.stderr)
+            return 1
+        if not include_wifi:
+            wifi = []
+        if not include_ble:
+            ble = []
+    else:
+        wifi, ble = _demo_observations(include_wifi, include_ble)
 
     result = scan_passive(wifi, ble)
     if args.json or args.wardrivego:
@@ -94,9 +163,21 @@ def _show_scan(args: argparse.Namespace) -> int:
         print(result.to_json(mode=mode))
         return 0
 
-    print("Passive scan metadata only; no credentials or payload content are captured.")
+    print(
+        "Passive scan metadata only; no credentials or payload content are captured. "
+        f"Source={source_label}."
+    )
+    if not args.serial:
+        print(
+            "Demo/stub observations (no --serial). "
+            "Real field capture is Android + ESP32 today; "
+            "pass --serial PORT for opt-in passive NDJSON ingest."
+        )
     for item in result.wifi:
-        print(f"Wi‑Fi: {item.ssid} {item.bssid} ch={item.channel} rssi={item.rssi} security={item.security}")
+        print(
+            f"Wi‑Fi: {item.ssid} {item.bssid} ch={item.channel} "
+            f"rssi={item.rssi} security={item.security}"
+        )
     for item in result.ble:
         print(f"BLE: {item.name or item.address} {item.address} rssi={item.rssi}")
     return 0
