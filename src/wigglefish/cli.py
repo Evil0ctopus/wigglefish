@@ -8,8 +8,27 @@ import sys
 from serial import SerialException
 
 from .ports import discover_ports
-from .serial_ingest import DEFAULT_BAUD, DEFAULT_DURATION_SECONDS, read_passive_serial
+from .serial_ingest import (
+    DEFAULT_BAUD,
+    DEFAULT_DURATION_SECONDS,
+    read_passive_serial,
+    validate_duration_seconds,
+)
 from .survey import BleObservation, WifiObservation, scan_passive
+
+
+def _duration_arg(value: str) -> float:
+    """Parse --duration; 0 means listen until Ctrl-C; negatives are rejected."""
+    try:
+        parsed = float(value)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError(f"invalid duration: {value!r}") from error
+    try:
+        return validate_duration_seconds(parsed)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError(
+            "duration must be >= 0 (0 means listen until Ctrl-C)"
+        ) from error
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -34,7 +53,8 @@ def build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             "Real field capture today is Android + ESP32-C5 USB serial. "
-            "Python --serial is a bounded, passive metadata ingest of that same stream."
+            "Python --serial is a passive metadata ingest of that same stream "
+            "(default duration is finite; --duration 0 listens until Ctrl-C)."
         ),
     )
     scan_parser.set_defaults(command="scan")
@@ -61,10 +81,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     scan_parser.add_argument(
         "--duration",
-        type=float,
+        type=_duration_arg,
         default=DEFAULT_DURATION_SECONDS,
         metavar="SECONDS",
-        help=f"seconds to listen when using --serial (default: {DEFAULT_DURATION_SECONDS:g})",
+        help=(
+            f"seconds to listen when using --serial "
+            f"(default: {DEFAULT_DURATION_SECONDS:g}; 0 = until Ctrl-C)"
+        ),
     )
     scan_parser.add_argument(
         "--baud",
