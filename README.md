@@ -42,15 +42,17 @@ web/           Browser Web Serial launcher and dashboard
 
 The firmware targets ESP32-C5 ECO2 hardware and uses ESP-IDF 5.5.5. It communicates at 115200 baud through a CH343 USB-serial bridge.
 
+Install ESP-IDF 5.5.5 (or the ESP-IDF release that supports your ESP32-C5 board), export the toolchain for your shell, then build from `firmware/`:
+
 ```powershell
-call C:\Users\jlors\esp\esp-idf-5.5.5\export.bat
+# After ESP-IDF is installed and exported for your shell:
 cd firmware
 idf.py set-target esp32c5
 idf.py build
-idf.py -p COM11 flash monitor
+idf.py -p COMx flash monitor
 ```
 
-Confirm the correct port before flashing. The firmware uses a custom 2 MB factory app partition and 4 MB flash configuration.
+Replace `COMx` with your board's serial port. Confirm the port before flashing. The firmware uses a custom 2 MB factory app partition and 4 MB flash configuration. See `firmware/README.md` for LED defaults and stream details.
 
 The stream is newline-delimited JSON. Examples:
 
@@ -61,22 +63,9 @@ The stream is newline-delimited JSON. Examples:
 
 ## Android App
 
-Build with the bundled Android SDK and Gradle installation:
+Open the `android/` directory in Android Studio, let Gradle sync, then run the `app` configuration on your phone or emulator. Details and USB VID/PID notes live in `android/README.md`.
 
-```powershell
-$env:ANDROID_HOME = "$PWD\tools\android-sdk"
-$env:ANDROID_SDK_ROOT = $env:ANDROID_HOME
-cd android
-..\tools\gradle-8.7\bin\gradle.bat assembleDebug
-```
-
-Install the generated APK:
-
-```powershell
-..\tools\android-sdk\platform-tools\adb.exe install -r app\build\outputs\apk\debug\app-debug.apk
-```
-
-Connect the ESP32-C5 through a USB-C OTG adapter and allow USB, location, Bluetooth, and nearby Wi-Fi permissions. The phone and ESP32-C5 can scan concurrently.
+Connect the ESP32-C5 through a USB-C OTG data adapter and allow USB, location, Bluetooth, and nearby Wi-Fi permissions. The phone and ESP32-C5 can scan concurrently.
 
 ## Python CLI
 

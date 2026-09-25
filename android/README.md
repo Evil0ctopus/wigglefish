@@ -21,6 +21,6 @@ The compatibility parser is intentionally metadata-only. It does not interpret a
 
 ## Build
 
-Open this `android` directory in Android Studio, allow Gradle to sync, then run the `app` configuration on the Galaxy S26 Ultra. Connect the ESP32-C5 through a USB-C OTG data adapter and accept the USB permission prompt.
+Open this `android` directory in Android Studio, allow Gradle to sync, then run the `app` configuration on your Android phone. Connect the ESP32-C5 through a USB-C OTG data adapter and accept the USB permission prompt.
 
 CYD boards can connect through a USB-C OTG adapter when the board exposes its USB-UART bridge. The board still needs compatible passive scanner firmware, such as HaleHound CSV output or firmware that emits Wigglefish JSON. A bare ESP32, factory firmware, or unrelated firmware may connect as serial but will not produce Wi-Fi/BLE observations.
