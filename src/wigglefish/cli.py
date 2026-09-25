@@ -47,6 +47,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="emit Wardrive Go-style metadata entries",
     )
     scan_parser.add_argument(
+        "--csv",
+        action="store_true",
+        help="emit Android/web wardrive CSV (MAC,SSID,AUTH,CHANNEL,RSSI,TYPE,NAME)",
+    )
+    scan_parser.add_argument(
         "--serial",
         metavar="PORT",
         help=(
@@ -158,9 +163,13 @@ def _show_scan(args: argparse.Namespace) -> int:
         wifi, ble = _demo_observations(include_wifi, include_ble)
 
     result = scan_passive(wifi, ble)
-    if args.json or args.wardrivego:
-        mode = "wardrivego" if args.wardrivego else "json"
-        print(result.to_json(mode=mode))
+    if args.json or args.wardrivego or args.csv:
+        if args.wardrivego:
+            print(result.to_json(mode="wardrivego"))
+        elif args.csv:
+            print(result.to_csv())
+        else:
+            print(result.to_json())
         return 0
 
     print(

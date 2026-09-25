@@ -78,6 +78,49 @@ class ScanResult:
             return json.dumps(wardrive_payload, indent=2, sort_keys=True)
         return json.dumps(payload, indent=2, sort_keys=True)
 
+    def to_csv(self) -> str:
+        """Emit Android/web wardrive CSV (MAC,SSID,AUTH,CHANNEL,RSSI,TYPE,NAME).
+
+        Matches the metadata-only CSV share format used by the Android controller
+        and the web launcher. Values are RFC4180-quoted; missing channel/rssi
+        become 0 like Android's optInt defaults.
+        """
+
+        def cell(value: Any) -> str:
+            text = "" if value is None else str(value)
+            return '"' + text.replace('"', '""') + '"'
+
+        rows = ["MAC,SSID,AUTH,CHANNEL,RSSI,TYPE,NAME"]
+        for item in self.wifi:
+            rows.append(
+                ",".join(
+                    [
+                        cell(item.bssid),
+                        cell(item.ssid),
+                        cell(item.security),
+                        cell(0 if item.channel is None else item.channel),
+                        cell(0 if item.rssi is None else item.rssi),
+                        cell("wifi"),
+                        cell(""),
+                    ]
+                )
+            )
+        for item in self.ble:
+            rows.append(
+                ",".join(
+                    [
+                        cell(item.address),
+                        cell(""),
+                        cell(""),
+                        cell(0),
+                        cell(0 if item.rssi is None else item.rssi),
+                        cell("bluetooth"),
+                        cell(item.name or ""),
+                    ]
+                )
+            )
+        return "\n".join(rows)
+
 
 def scan_passive(
     wifi: list[WifiObservation] | None = None,

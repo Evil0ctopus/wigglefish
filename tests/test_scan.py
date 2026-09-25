@@ -106,6 +106,69 @@ def test_wardrivego_export_shape_is_metadata_only() -> None:
     assert "handshake" not in serialized
 
 
+def test_parser_accepts_csv_flag() -> None:
+    args = build_parser().parse_args(["scan", "--wifi", "--ble", "--csv"])
+    assert args.command == "scan"
+    assert args.wifi is True
+    assert args.ble is True
+    assert args.csv is True
+
+
+def test_csv_export_matches_android_header_and_is_metadata_only() -> None:
+    wifi = WifiObservation(
+        ssid='Cafe "Main"',
+        bssid="AA:BB:CC:DD:EE:FF",
+        channel=11,
+        rssi=-52,
+        security="WPA2",
+        vendor="Example Wi‑Fi AP",
+    )
+    ble = BleObservation(
+        address="11:22:33:44:55:66",
+        name="OfficeCam",
+        rssi=-61,
+        service_uuids=["0xFEAA"],
+        manufacturer_data={"0x004C": "4C 00 00 00"},
+    )
+
+    result = scan_passive([wifi], [ble])
+    csv_text = result.to_csv()
+    lines = csv_text.splitlines()
+    lowered = csv_text.lower()
+
+    assert lines[0] == "MAC,SSID,AUTH,CHANNEL,RSSI,TYPE,NAME"
+    assert len(lines) == 3
+
+    wifi_row = lines[1]
+    ble_row = lines[2]
+
+    assert wifi_row == (
+        '"AA:BB:CC:DD:EE:FF","Cafe ""Main""","WPA2","11","-52","wifi",""'
+    )
+    assert ble_row == (
+        '"11:22:33:44:55:66","","","0","-61","bluetooth","OfficeCam"'
+    )
+
+    assert "password" not in lowered
+    assert "credential" not in lowered
+    assert "handshake" not in lowered
+    assert "vendor" not in lowered
+    assert "manufacturer" not in lowered
+
+
+def test_csv_scan_cli_prints_android_shape(capsys: pytest.CaptureFixture[str]) -> None:
+    with patch("sys.argv", ["wigglefish", "scan", "--wifi", "--ble", "--csv"]):
+        assert main() == 0
+    out = capsys.readouterr().out.strip()
+    lines = out.splitlines()
+    assert lines[0] == "MAC,SSID,AUTH,CHANNEL,RSSI,TYPE,NAME"
+    assert '"HomeNet"' in lines[1]
+    assert '"wifi"' in lines[1]
+    assert '"OfficeCam"' in lines[2]
+    assert '"bluetooth"' in lines[2]
+    assert "password" not in out.lower()
+
+
 def test_parse_stream_line_wifi_and_events() -> None:
     wifi = parse_stream_line(
         '{"type":"wifi","ssid":"Example","bssid":"AA:BB:CC:DD:EE:FF",'
