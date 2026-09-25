@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "wigglefish"
 version = "0.1.0"
-description = "Safely inspect connected serial devices."
+description = "Passive Wi-Fi/BLE field scanner metadata tools for ESP32-C5 + Android."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
