@@ -19,12 +19,15 @@ The automatic serial stream emits newline-delimited JSON. Wi-Fi records use `typ
 
 ## Build and flash
 
-Install ESP-IDF for the exact ESP32-C5 board, then from this directory run:
+Install ESP-IDF 5.5.5 (or the ESP-IDF release that supports your ESP32-C5 board), export the toolchain for your shell, then from this directory run:
 
 ```powershell
+# After ESP-IDF is installed and exported for your shell:
 idf.py set-target esp32c5
 idf.py build
-idf.py -p COM11 flash monitor
+idf.py -p COMx flash monitor
 ```
 
-The project uses the custom `partitions.csv` layout with a 2 MB factory app partition. Confirm the actual COM port before flashing. Flashing replaces the existing firmware, so the exact board model and flash size must be verified first.
+Replace `COMx` with your board's serial port (a Windows `COM` device, or `/dev/ttyUSB0` / `/dev/ttyACM0` on Linux). Confirm the port before flashing. See the root [README](../README.md) for high-level clone/build notes and the Python CLI serial examples.
+
+The project uses the custom `partitions.csv` layout with a 2 MB factory app partition and a 4 MB flash configuration. Flashing replaces the existing firmware, so the exact board model and flash size must be verified first.
