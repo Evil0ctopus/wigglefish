@@ -124,6 +124,15 @@ def _rssi_better(candidate: int | None, current: int | None) -> bool:
     return candidate > current
 
 
+def validate_duration_seconds(duration_seconds: float) -> float:
+    """Require ``duration_seconds >= 0``; ``0`` means listen until interrupted."""
+    if duration_seconds < 0:
+        raise ValueError(
+            "duration_seconds must be >= 0 (0 means listen until interrupted)"
+        )
+    return duration_seconds
+
+
 def _iter_serial_lines(
     port: str,
     *,
@@ -131,22 +140,30 @@ def _iter_serial_lines(
     duration_seconds: float = DEFAULT_DURATION_SECONDS,
     read_timeout: float = 0.2,
 ) -> Iterator[str]:
-    """Yield newline-delimited text read from ``port`` until ``duration_seconds`` elapses.
+    """Yield newline-delimited text from ``port`` for a listen window.
 
-    The port is opened read-only for application purposes: this helper never
-    writes bytes to the device.
+    ``duration_seconds`` must be >= 0. A positive value listens for that many
+    seconds; ``0`` listens until KeyboardInterrupt (Ctrl-C). The port is opened
+    read-only for application purposes: this helper never writes bytes to the
+    device.
     """
-    deadline = time.monotonic() + max(0.0, duration_seconds)
+    duration_seconds = validate_duration_seconds(duration_seconds)
+    unbounded = duration_seconds == 0
+    deadline = float("inf") if unbounded else time.monotonic() + duration_seconds
     buffer = ""
     with serial.Serial(port=port, baudrate=baudrate, timeout=read_timeout) as handle:
-        while time.monotonic() < deadline:
-            chunk = handle.read(512)
-            if not chunk:
-                continue
-            buffer += chunk.decode("utf-8", errors="replace")
-            while "\n" in buffer:
-                line, buffer = buffer.split("\n", 1)
-                yield line.rstrip("\r")
+        try:
+            while time.monotonic() < deadline:
+                chunk = handle.read(512)
+                if not chunk:
+                    continue
+                buffer += chunk.decode("utf-8", errors="replace")
+                while "\n" in buffer:
+                    line, buffer = buffer.split("\n", 1)
+                    yield line.rstrip("\r")
+        except KeyboardInterrupt:
+            # Stop listening; lines already yielded are kept by the caller.
+            return
 
 
 def read_passive_serial(
@@ -155,7 +172,12 @@ def read_passive_serial(
     baudrate: int = DEFAULT_BAUD,
     duration_seconds: float = DEFAULT_DURATION_SECONDS,
 ) -> tuple[list[WifiObservation], list[BleObservation]]:
-    """Passively ingest firmware NDJSON from a serial port for a bounded duration."""
+    """Passively ingest firmware NDJSON from a serial port.
+
+    Default listen window is ``DEFAULT_DURATION_SECONDS``. Pass
+    ``duration_seconds=0`` to listen until interrupted (Ctrl-C). Negative
+    durations are rejected.
+    """
     return observations_from_lines(
         _iter_serial_lines(
             port,

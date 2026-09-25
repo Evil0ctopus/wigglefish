@@ -1,10 +1,15 @@
+import argparse
 import json
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from wigglefish.cli import build_parser, main
-from wigglefish.serial_ingest import observations_from_lines, parse_stream_line
+from wigglefish.serial_ingest import (
+    observations_from_lines,
+    parse_stream_line,
+    validate_duration_seconds,
+)
 from wigglefish.survey import BleObservation, WifiObservation, scan_passive
 
 
@@ -299,3 +304,81 @@ def test_serial_ingest_never_writes_to_port() -> None:
     assert len(wifi) == 1
     assert wifi[0].ssid == "X"
     assert ble == []
+
+
+def test_parser_accepts_duration_zero() -> None:
+    args = build_parser().parse_args(["scan", "--serial", "/dev/ttyUSB0", "--duration", "0"])
+    assert args.duration == 0.0
+
+
+def test_parser_rejects_negative_duration() -> None:
+    with pytest.raises(SystemExit):
+        build_parser().parse_args(["scan", "--serial", "/dev/ttyUSB0", "--duration", "-1"])
+
+
+def test_validate_duration_seconds_semantics() -> None:
+    assert validate_duration_seconds(0) == 0
+    assert validate_duration_seconds(5.0) == 5.0
+    with pytest.raises(ValueError, match="duration_seconds must be >= 0"):
+        validate_duration_seconds(-0.1)
+
+
+def test_serial_ingest_duration_zero_listens_until_interrupt() -> None:
+    handle = MagicMock()
+    handle.read.side_effect = [
+        b'{"type":"wifi","ssid":"Live","bssid":"AA:BB:CC:DD:EE:01","channel":6,"rssi":-40,"security":"OPEN"}\n',
+        KeyboardInterrupt(),
+    ]
+    with patch("wigglefish.serial_ingest.serial.Serial") as serial_ctor:
+        serial_ctor.return_value.__enter__.return_value = handle
+        from wigglefish.serial_ingest import read_passive_serial
+
+        wifi, ble = read_passive_serial("/dev/ttyUSB0", duration_seconds=0)
+
+    serial_ctor.assert_called_once()
+    assert handle.write.call_count == 0
+    assert len(wifi) == 1
+    assert wifi[0].ssid == "Live"
+    assert ble == []
+
+
+def test_serial_ingest_rejects_negative_duration() -> None:
+    from wigglefish.serial_ingest import read_passive_serial
+
+    with pytest.raises(ValueError, match="duration_seconds must be >= 0"):
+        read_passive_serial("/dev/ttyUSB0", duration_seconds=-1)
+
+
+def test_serial_scan_cli_passes_duration_zero() -> None:
+    wifi = [
+        WifiObservation(
+            ssid="StreamNet",
+            bssid="DE:AD:BE:EF:00:02",
+            channel=1,
+            rssi=-50,
+            security="OPEN",
+        )
+    ]
+    with (
+        patch(
+            "sys.argv",
+            ["wigglefish", "scan", "--serial", "/dev/ttyUSB9", "--duration", "0", "--json"],
+        ),
+        patch("wigglefish.cli.read_passive_serial", return_value=(wifi, [])) as reader,
+    ):
+        assert main() == 0
+    reader.assert_called_once_with("/dev/ttyUSB9", baudrate=115200, duration_seconds=0.0)
+
+
+def test_parser_duration_help_mentions_ctrl_c() -> None:
+    parser = build_parser()
+    scan_parser = None
+    for action in parser._actions:
+        if isinstance(action, argparse._SubParsersAction):
+            scan_parser = action.choices["scan"]
+            break
+    assert scan_parser is not None
+    scan_help = scan_parser.format_help()
+    # argparse may wrap the help line; match stable substrings.
+    assert "until Ctrl-C" in scan_help
+    assert "--duration" in scan_help

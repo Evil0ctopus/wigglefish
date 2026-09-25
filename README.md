@@ -75,11 +75,14 @@ wigglefish ports
 wigglefish scan --wifi --ble --wardrivego
 wigglefish scan --wifi --ble --csv
 wigglefish scan --serial COMx --duration 5 --json
+wigglefish scan --serial COMx --duration 0 --json
 ```
 
 `wigglefish scan` without `--serial` uses **demo/stub** observations so export formats can be exercised without hardware. Real field capture today is the Android app talking to the ESP32-C5 over USB serial. `--csv` matches the Android/web wardrive CSV columns (`MAC,SSID,AUTH,CHANNEL,RSSI,TYPE,NAME`) for metadata-only rows.
 
 Pass `--serial PORT` for an **opt-in, read-only** ingest of the same newline-delimited JSON stream the firmware already emits at 115200 baud. The CLI never writes commands to the port, never joins networks, and only keeps Wi-Fi/BLE metadata fields (`ssid`, `bssid`, `channel`, `rssi`, `security`/`encryption`, BLE address/name/RSSI/manufacturer data). Use `wigglefish ports` to locate the device path, then replace `COMx` (or `/dev/ttyUSB0` / `/dev/ttyACM0`) with that port.
+
+`--duration` defaults to **5** seconds. Pass `--duration 0` to listen until Ctrl-C (KeyboardInterrupt); observations collected so far are still exported. Negative durations are rejected.
 
 ## Web Launcher
 
