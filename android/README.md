@@ -69,3 +69,11 @@ cd android
 ```
 
 CYD boards can connect through a USB-C OTG adapter when the board exposes its USB-UART bridge. The board still needs compatible passive scanner firmware, such as HaleHound CSV output or firmware that emits Wigglefish JSON. A bare ESP32, factory firmware, or unrelated firmware may connect as serial but will not produce Wi-Fi/BLE observations.
+
+## Launcher icon
+
+Adaptive + density mipmaps under `android/app/src/main/res`:
+- Foreground: pink fish silhouette + cyan RF arcs (brand colors `#FF4FD8` / `#8FF7FF`)
+- Background: deep night `#050611`
+- Preview: [docs/ic_launcher_preview.png](docs/ic_launcher_preview.png)
+
