@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/homeFragment"
+        android:icon="@drawable/ic_nav_home"
+        android:title="@string/nav_home" />
+    <item
+        android:id="@+id/connectFragment"
+        android:icon="@drawable/ic_nav_connect"
+        android:title="@string/nav_connect" />
+    <item
+        android:id="@+id/flashFragment"
+        android:icon="@drawable/ic_nav_flash"
+        android:title="@string/nav_flash" />
+    <item
+        android:id="@+id/liveFieldFragment"
+        android:icon="@drawable/ic_nav_field"
+        android:title="@string/nav_live_field" />
+    <item
+        android:id="@+id/exportsFragment"
+        android:icon="@drawable/ic_nav_exports"
+        android:title="@string/nav_exports" />
+</menu>
