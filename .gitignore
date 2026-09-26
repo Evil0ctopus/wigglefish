@@ -21,3 +21,4 @@ eim_config.toml
 *.keystore
 android/keystore.properties
 
+firmware/dist/

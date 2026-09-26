@@ -1,0 +1,26 @@
+{
+  "name": "Wigglefish",
+  "version": "VERSION_PLACEHOLDER",
+  "new_install_prompt_erase": true,
+  "new_install_improv_wait_time": 0,
+  "builds": [
+    {
+      "chipFamily": "ESP32-C5",
+      "improv": false,
+      "parts": [
+        {
+          "path": "ASSET_BASE_URL/bootloader.bin",
+          "offset": 8192
+        },
+        {
+          "path": "ASSET_BASE_URL/partition-table.bin",
+          "offset": 32768
+        },
+        {
+          "path": "ASSET_BASE_URL/wigglefish_firmware.bin",
+          "offset": 65536
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,169 @@
+# Build ESP32-C5 firmware and attach flashable assets to a GitHub Release.
+# Trigger: push a tag matching firmware-v* (example: firmware-v0.1.0)
+# Or: workflow_dispatch (creates a draft/prerelease by default for Josh approval).
+#
+# Safety framing: authorized / passive field scanner only.
+
+name: Firmware release (ESP32-C5)
+
+on:
+  push:
+    tags:
+      - "firmware-v*"
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Release tag to create/update (e.g. firmware-v0.1.0)"
+        required: true
+        type: string
+      draft:
+        description: "Create as draft release"
+        required: false
+        type: boolean
+        default: true
+      prerelease:
+        description: "Mark release as prerelease"
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve version / tag
+        id: meta
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ inputs.tag_name }}"
+            DRAFT="${{ inputs.draft }}"
+            PRE="${{ inputs.prerelease }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+            # Tag pushes: prerelease by default so Josh can promote.
+            DRAFT="false"
+            PRE="true"
+          fi
+          VERSION="${TAG#firmware-}"
+          {
+            echo "tag=${TAG}"
+            echo "version=${VERSION}"
+            echo "draft=${DRAFT}"
+            echo "prerelease=${PRE}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Build + merge flash image (ESP-IDF)
+        uses: espressif/esp-idf-ci-action@v1
+        with:
+          esp_idf_version: v5.5.5
+          target: esp32c5
+          path: firmware
+          command: >-
+            idf.py build &&
+            mkdir -p dist &&
+            cp build/bootloader/bootloader.bin dist/bootloader.bin &&
+            cp build/partition_table/partition-table.bin dist/partition-table.bin &&
+            cp build/wigglefish_firmware.bin dist/wigglefish_firmware.bin &&
+            python -m esptool --chip esp32c5 merge_bin
+            -o dist/merged-firmware.bin
+            --flash_mode dio
+            --flash_freq 80m
+            --flash_size 4MB
+            0x2000 build/bootloader/bootloader.bin
+            0x8000 build/partition_table/partition-table.bin
+            0x10000 build/wigglefish_firmware.bin &&
+            ls -la dist/
+
+      - name: Write ESP Web Tools manifests
+        working-directory: firmware
+        run: |
+          set -euo pipefail
+          BASE="https://github.com/${{ github.repository }}/releases/download/${{ steps.meta.outputs.tag }}"
+          VERSION="${{ steps.meta.outputs.version }}"
+          test -f dist/bootloader.bin
+          test -f dist/partition-table.bin
+          test -f dist/wigglefish_firmware.bin
+          test -f dist/merged-firmware.bin
+
+          sed \
+            -e "s|VERSION_PLACEHOLDER|${VERSION}|g" \
+            -e "s|ASSET_BASE_URL|${BASE}|g" \
+            web-flash/manifest.template.json > dist/manifest.json
+
+          python3 - <<PY
+          import json
+          base = "${BASE}"
+          ver = "${VERSION}"
+          doc = {
+            "name": "Wigglefish",
+            "version": ver,
+            "new_install_prompt_erase": True,
+            "new_install_improv_wait_time": 0,
+            "builds": [{
+              "chipFamily": "ESP32-C5",
+              "improv": False,
+              "parts": [{"path": f"{base}/merged-firmware.bin", "offset": 0}],
+            }],
+          }
+          with open("dist/manifest-merged.json", "w", encoding="utf-8") as f:
+              json.dump(doc, f, indent=2)
+              f.write("\n")
+          PY
+          ls -la dist/
+          echo "Suggested Site Keeper manifest URL (after release publish):"
+          echo "  ${BASE}/manifest-merged.json"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: Firmware ${{ steps.meta.outputs.version }}
+          draft: ${{ steps.meta.outputs.draft == 'true' }}
+          prerelease: ${{ steps.meta.outputs.prerelease == 'true' }}
+          fail_on_unmatched_files: true
+          generate_release_notes: false
+          body: |
+            ## Wigglefish ESP32-C5 firmware ${{ steps.meta.outputs.version }}
+
+            Authorized / passive field scanner firmware for ESP32-C5.
+
+            - Passive Wi-Fi scans only (does not join networks)
+            - Passive BLE advertisement scans (names + manufacturer data)
+            - Metadata only — no credential, handshake, or frame injection features
+            - Use only where you are authorized to observe wireless signals
+
+            ### Flash assets (ESP Web Tools)
+
+            | File | Offset |
+            |------|--------|
+            | `bootloader.bin` | `0x2000` |
+            | `partition-table.bin` | `0x8000` |
+            | `wigglefish_firmware.bin` | `0x10000` |
+            | `merged-firmware.bin` | `0` (preferred single image) |
+
+            Flash size: **4 MB**. Serial console baud: **115200**.
+
+            Manifests: `manifest.json` (multi-part) and `manifest-merged.json` (single merged image).
+            Point Site Keeper's `<esp-web-install-button manifest="...">` at one of these asset URLs (or copy the JSON onto GitHub Pages).
+
+            ### Local flash
+
+            ```bash
+            idf.py -p PORT flash
+            # or
+            esptool --chip esp32c5 write-flash --flash_mode dio --flash_size 4MB \
+              0x2000 bootloader.bin 0x8000 partition-table.bin 0x10000 wigglefish_firmware.bin
+            ```
+          files: |
+            firmware/dist/bootloader.bin
+            firmware/dist/partition-table.bin
+            firmware/dist/wigglefish_firmware.bin
+            firmware/dist/merged-firmware.bin
+            firmware/dist/manifest.json
+            firmware/dist/manifest-merged.json
