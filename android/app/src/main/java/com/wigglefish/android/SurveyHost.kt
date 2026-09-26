@@ -22,5 +22,12 @@ interface SurveyHost {
     fun shareWigleCsv()
     fun shareGeoJson()
     fun clearSession()
+    /** Persist current in-memory session to session archive. */
+    fun saveCurrentSession()
+    /** Refresh archived session list UI (Exports). */
+    fun listArchivedSessions(): List<SessionArchive.SessionMeta>
+    fun loadArchivedSession(fileName: String)
+    fun deleteArchivedSession(fileName: String)
+    fun exportArchivedSession(fileName: String, format: String)
     fun navigateTo(destinationId: Int)
 }

@@ -22,7 +22,7 @@
     <fragment
         android:id="@+id/liveFieldFragment"
         android:name="com.wigglefish.android.LiveFieldFragment"
-        android:label="Live Field" />
+        android:label="Survey" />
 
     <fragment
         android:id="@+id/exportsFragment"

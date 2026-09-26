@@ -139,12 +139,49 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="SESSION ARCHIVE"
+            android:textColor="#F0B35A"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/saveSessionButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:minHeight="52dp"
+            android:text="SAVE SESSION"
+            android:textColor="#050611"
+            android:backgroundTint="#8FF7FF" />
+
+        <Button
+            android:id="@+id/refreshHistoryButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:minHeight="44dp"
+            android:text="REFRESH HISTORY"
+            android:textColor="#F4F7FF"
+            android:backgroundTint="#17112D" />
+
+        <LinearLayout
+            android:id="@+id/sessionHistoryContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="vertical" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
+            android:layout_marginBottom="18dp"
             android:background="#10142B"
             android:padding="12dp"
             android:fontFamily="monospace"
             android:lineSpacingExtra="4dp"
-            android:text="JSON = fused session pack (observations + GPS timeline).&#10;CSV = enriched generic rows.&#10;Wardrive Go CSV = MAC/SSID/AUTH/CHANNEL/RSSI/TYPE/NAME + GPS.&#10;WiGLE CSV = WigleWifi-1.6 compatible (WIFI + BLE).&#10;GeoJSON = FeatureCollection of APs/BLE with coordinates.&#10;Passive metadata-only — no handshakes / PCAP / attack tools."
+            android:text="JSON = fused session pack (observations + GPS timeline).&#10;CSV = enriched generic rows.&#10;Wardrive Go CSV = MAC/SSID/AUTH/CHANNEL/RSSI/TYPE/NAME + GPS.&#10;WiGLE CSV = WigleWifi-1.6; rows without GPS are omitted (no 0.0/0.0).&#10;GeoJSON = points (lastGps or nearest-in-time) + session track LineString; observations still without coords are counted in properties, not dropped silently.&#10;Archive = list / reopen / re-export / delete past sessions.&#10;Passive metadata-only — no handshakes / PCAP / attack tools."
             android:textColor="#D6D9FF"
             android:textSize="12sp" />
     </LinearLayout>

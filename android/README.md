@@ -9,8 +9,8 @@ The UI is a bottom-nav shell (AndroidX Navigation + Fragments). Five destination
 1. **Home** â€” status summary, strongest signal, Wi-Fi / BLE / GPS counters, and quick jumps to the other pages.
 2. **Connect / Device** â€” USB connect, phone + USB collection toggles, permission/device/GPS/source status.
 3. **Flash / Firmware** â€” **Identify chip** + **in-app flash write** over USB OTG (Kotlin ROM protocol, not Python esptool).
-4. **Survey / Wardrive** (nav label: Survey) — fused Wi-Fi + BLE + GPS session: spectrum, filters, radar, coverage quality, live observation list with hit/peak RSSI + vendor OUI.
-5. **Exports / Sessions** — JSON, CSV, Wardrive Go CSV, WiGLE CSV, GeoJSON; Stop All; clear session; session/coverage counters.
+4. **Survey / Wardrive** (nav label: Survey) — fused Wi-Fi + BLE + GPS session: OSM map (track + markers + density), spectrum, filters, radar, richer coverage quality, live list with hit/peak RSSI + full OUI vendor.
+5. **Exports / Sessions** — JSON, CSV, Wardrive Go CSV, WiGLE CSV, GeoJSON; multi-session archive (list/open/re-export/delete); Stop All; clear (auto-archives).
 
 Shared observational state lives in an activity-scoped `SurveySessionViewModel`. USB serial, phone Wi-Fi/BLE/GPS, and file logging stay owned by `MainActivity`, which implements `SurveyHost` for fragment actions.
 
@@ -71,9 +71,19 @@ C5 flash map (matches `firmware/web-flash` / ESP-IDF):
 
 
 
-## Passive wardrive (v0.3+)
+## Passive wardrive (v0.4+)
 
-The Survey page is a **fused session**: phone/ESP Wi-Fi observations, BLE ads, and GPS fixes share one timeline. Each BSSID/MAC is deduped with `firstSeen` / `lastSeen`, `hitCount`, `peakRssi` / `avgRssi`, security (when known), vendor OUI (lightweight table), and last GPS.
+The Survey page is a **fused session**: phone/ESP Wi-Fi observations, BLE ads, and GPS fixes share one timeline. Each BSSID/MAC is deduped with `firstSeen` / `lastSeen`, `hitCount`, `peakRssi` / `avgRssi`, security (when known), **vendor OUI** (Wireshark `manuf` asset, gzip-compressed), and last GPS.
+
+### Map / heatmap (Survey)
+
+osmdroid + OpenStreetMap tiles (no Google Maps API key):
+
+- GPS track polyline for the current session
+- AP / BLE markers at last-known coordinates
+- Simple density circles (opacity / radius from RSSI + hitCount)
+
+Requires network for tiles; INTERNET permission is declared.
 
 ### Export pack
 
@@ -82,14 +92,22 @@ The Survey page is a **fused session**: phone/ESP Wi-Fi observations, BLE ads, a
 | EXPORT JSON | Session pack: summary + observations + GPS timeline |
 | EXPORT CSV | Enriched generic CSV (MAC/SSID/AUTH/… + GPS + timing) |
 | EXPORT WARDRIVE GO CSV | Wardrive Go–compatible fields + GPS/timing |
-| EXPORT WIGLE CSV | `WigleWifi-1.6` pre-header + WIFI/BLE rows |
-| EXPORT GEOJSON | FeatureCollection of observations (and GPS fixes) with coordinates |
+| EXPORT WIGLE CSV | `WigleWifi-1.6` pre-header + WIFI/BLE rows; **rows without a GPS fix are omitted** (no `0.0/0.0` placeholders) |
+| EXPORT GEOJSON | FeatureCollection: observation Points (`lastGps` or nearest GPS-in-time), session track `LineString`; observations still without coords are counted in FeatureCollection `properties` (not silently ignored) |
 
-**Scope:** metadata-only passive survey. No beacon flood, BLE spam, EAPOL/PMKID capture, deauth, injection, evil portal, or PCAP-for-cracking.
+### Session archive (multi-session history)
+
+Exports → **SAVE SESSION** persists the current pack under app-private `sessions/`. **CLEAR SESSION** archives a non-empty session first. History cards support **OPEN** (reload summary into Survey), re-export (JSON / WiGLE / GeoJSON / CSV / Wardrive Go), and **DEL**.
+
+### Coverage quality
+
+Richer session stats: duration, unique Wi-Fi/BLE, GPS points, fix rate/min, distance estimate along the track, observations with/without GPS, and top channel histogram.
 
 ### Stop All
 
 Home / Connect / Survey / Exports expose **STOP ALL COLLECTION** — turns off phone Wi-Fi/BLE/GPS listeners and disconnects USB survey in one tap (Flash/Identify can still reconnect USB separately).
+
+**Scope:** metadata-only passive survey. No beacon flood, BLE spam, EAPOL/PMKID capture, deauth, injection, evil portal, or PCAP-for-cracking.
 
 ## Behavior
 

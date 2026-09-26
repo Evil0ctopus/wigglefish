@@ -115,6 +115,42 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
+            android:text="FIELD MAP / TRACK + HEAT"
+            android:textColor="#F0B35A"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/mapHintText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="MAP  waiting for GPS + observations"
+            android:textColor="#5D958D"
+            android:textSize="11sp"
+            android:fontFamily="monospace" />
+
+        <org.osmdroid.views.MapView
+            android:id="@+id/surveyMap"
+            android:layout_width="match_parent"
+            android:layout_height="240dp"
+            android:layout_marginTop="6dp"
+            android:background="#10142B" />
+
+        <Button
+            android:id="@+id/refreshMapButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:minHeight="44dp"
+            android:text="REFRESH MAP"
+            android:textColor="#050611"
+            android:backgroundTint="#8FF7FF" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
             android:text="AIRSPACE / CHANNEL ACTIVITY"
             android:textColor="#F0B35A"
             android:textSize="11sp"
