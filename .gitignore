@@ -1,4 +1,4 @@
-__pycache__/
+﻿__pycache__/
 *.py[cod]
 *.egg-info/
 .venv/
@@ -15,3 +15,9 @@ tools/android-sdk/
 tools/gradle-*/
 tools/*.zip
 eim_config.toml
+
+# Release signing — never commit
+*.jks
+*.keystore
+android/keystore.properties
+
