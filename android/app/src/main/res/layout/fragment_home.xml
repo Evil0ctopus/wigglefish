@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:padding="22dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="WIGGLEFISH // HOME"
+            android:textColor="#FF4FD8"
+            android:textSize="23sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/statusText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:text="REAL SIGNALS // PASSIVE RECON // ESP32-C5"
+            android:textColor="#8FF7FF"
+            android:textSize="14sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="#17112D"
+                android:padding="8dp"
+                android:text="WIFI RECON"
+                android:textColor="#FF4FD8"
+                android:textSize="10sp"
+                android:fontFamily="monospace" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:background="#0C2633"
+                android:padding="8dp"
+                android:text="BLE TRACKING"
+                android:textColor="#8FF7FF"
+                android:textSize="10sp"
+                android:fontFamily="monospace" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:background="#302116"
+                android:padding="8dp"
+                android:text="FIELD MODE"
+                android:textColor="#F0B35A"
+                android:textSize="10sp"
+                android:fontFamily="monospace" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/strongestText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="SIGNAL LOCK  --   strongest observation: waiting"
+            android:textColor="#F0B35A"
+            android:textSize="11sp"
+            android:fontFamily="monospace" />
+
+        <TextView
+            android:id="@+id/sessionText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="SESSION  00 passes   0 records   waiting"
+            android:textColor="#5D958D"
+            android:textSize="11sp"
+            android:fontFamily="monospace" />
+
+        <TextView
+            android:id="@+id/deviceText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="USB DEVICE  NO USB DEVICE"
+            android:textColor="#8FF7FF"
+            android:textSize="11sp"
+            android:fontFamily="monospace" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/countText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="#10142B"
+                android:padding="14dp"
+                android:text="0\nWi-Fi"
+                android:textColor="#8FF7FF"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/bleCountText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:background="#10142B"
+                android:padding="14dp"
+                android:text="0\nBLE"
+                android:textColor="#FF4FD8"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/gpsCountText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:background="#10142B"
+                android:padding="14dp"
+                android:text="0&#10;GPS SAT"
+                android:textColor="#F0B35A"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:text="QUICK ACTIONS"
+            android:textColor="#F0B35A"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/openConnectButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:minHeight="52dp"
+            android:text="CONNECT / DEVICE"
+            android:textColor="#050611"
+            android:backgroundTint="#FF4FD8" />
+
+        <Button
+            android:id="@+id/openLiveFieldButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:minHeight="52dp"
+            android:text="LIVE FIELD"
+            android:textColor="#050611"
+            android:backgroundTint="#8FF7FF" />
+
+        <Button
+            android:id="@+id/openExportsButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:minHeight="52dp"
+            android:text="EXPORTS / SESSIONS"
+            android:textColor="#050611"
+            android:backgroundTint="#F0B35A" />
+
+        <Button
+            android:id="@+id/openFlashButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:minHeight="52dp"
+            android:text="FLASH / FIRMWARE"
+            android:textColor="#F4F7FF"
+            android:backgroundTint="#17112D" />
+    </LinearLayout>
+</ScrollView>

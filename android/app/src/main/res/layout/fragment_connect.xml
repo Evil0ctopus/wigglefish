@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:padding="22dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="CONNECT // DEVICE"
+            android:textColor="#FF4FD8"
+            android:textSize="23sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/statusText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:text="REAL SIGNALS // PASSIVE RECON // ESP32-C5"
+            android:textColor="#8FF7FF"
+            android:textSize="14sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="USB + COLLECTION TOGGLES"
+            android:textColor="#F0B35A"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/deviceText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="USB DEVICE  NO USB DEVICE"
+            android:textColor="#8FF7FF"
+            android:textSize="11sp"
+            android:fontFamily="monospace" />
+
+        <TextView
+            android:id="@+id/locationText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="GPS LOCK  phone location optional"
+            android:textColor="#8FF7FF"
+            android:textSize="11sp"
+            android:fontFamily="monospace" />
+
+        <TextView
+            android:id="@+id/sourceText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="ESP32_SERIAL 0   PHONE 0   LEGACY_SERIAL 0"
+            android:textColor="#FF4FD8"
+            android:textSize="11sp"
+            android:fontFamily="monospace" />
+
+        <Button
+            android:id="@+id/connectButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:minHeight="52dp"
+            android:text="CONNECT USB"
+            android:textColor="#050611"
+            android:backgroundTint="#FF4FD8" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/phoneCollectionButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:minHeight="52dp"
+                android:text="PHONE COLLECTION ON"
+                android:textSize="10sp"
+                android:textColor="#050611"
+                android:backgroundTint="#8FF7FF" />
+
+            <Button
+                android:id="@+id/usbCollectionButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:minHeight="52dp"
+                android:text="USB COLLECTION ON"
+                android:textSize="10sp"
+                android:textColor="#050611"
+                android:backgroundTint="#FF4FD8" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:background="#10142B"
+            android:padding="12dp"
+            android:fontFamily="monospace"
+            android:text="Permissions: location + nearby Wi-Fi/BLE when phone collection is on.\nUSB OTG: ESP32-C5 / CH343 preferred; other usb-serial boards accepted."
+            android:textColor="#D6D9FF"
+            android:textSize="12sp"
+            android:lineSpacingExtra="4dp" />
+    </LinearLayout>
+</ScrollView>

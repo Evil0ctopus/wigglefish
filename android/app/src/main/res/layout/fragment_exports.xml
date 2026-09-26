@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:padding="22dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="EXPORTS // SESSIONS"
+            android:textColor="#FF4FD8"
+            android:textSize="23sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/sessionText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="SESSION  00 passes   0 records   waiting"
+            android:textColor="#5D958D"
+            android:textSize="12sp"
+            android:fontFamily="monospace" />
+
+        <TextView
+            android:id="@+id/sourceText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="ESP32_SERIAL 0   PHONE 0   LEGACY_SERIAL 0"
+            android:textColor="#FF4FD8"
+            android:textSize="11sp"
+            android:fontFamily="monospace" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="SHARE + CLEAR"
+            android:textColor="#F0B35A"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/exportButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:minHeight="52dp"
+            android:text="EXPORT JSON"
+            android:textColor="#050611"
+            android:backgroundTint="#8FF7FF" />
+
+        <Button
+            android:id="@+id/csvButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:minHeight="52dp"
+            android:text="EXPORT CSV"
+            android:textColor="#050611"
+            android:backgroundTint="#F0B35A" />
+
+        <Button
+            android:id="@+id/clearButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:minHeight="52dp"
+            android:text="CLEAR SESSION"
+            android:textColor="#F4F7FF"
+            android:backgroundTint="#17112D" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="#10142B"
+            android:padding="12dp"
+            android:fontFamily="monospace"
+            android:lineSpacingExtra="4dp"
+            android:text="JSON exports the live observation set.\nCSV uses a wardrive-friendly MAC/SSID/AUTH/CHANNEL/RSSI layout.\nClear wipes in-memory records and on-device session JSONL logs."
+            android:textColor="#D6D9FF"
+            android:textSize="12sp" />
+    </LinearLayout>
+</ScrollView>

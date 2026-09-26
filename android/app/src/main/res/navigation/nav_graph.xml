@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/homeFragment">
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.wigglefish.android.HomeFragment"
+        android:label="Home" />
+
+    <fragment
+        android:id="@+id/connectFragment"
+        android:name="com.wigglefish.android.ConnectFragment"
+        android:label="Connect" />
+
+    <fragment
+        android:id="@+id/flashFragment"
+        android:name="com.wigglefish.android.FlashFragment"
+        android:label="Flash" />
+
+    <fragment
+        android:id="@+id/liveFieldFragment"
+        android:name="com.wigglefish.android.LiveFieldFragment"
+        android:label="Live Field" />
+
+    <fragment
+        android:id="@+id/exportsFragment"
+        android:name="com.wigglefish.android.ExportsFragment"
+        android:label="Exports" />
+</navigation>

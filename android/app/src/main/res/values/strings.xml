@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Wigglefish</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_connect">Connect</string>
+    <string name="nav_flash">Flash</string>
+    <string name="nav_live_field">Live Field</string>
+    <string name="nav_exports">Exports</string>
 </resources>
