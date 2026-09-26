@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "images": [
+    {
+      "id": "wigglefish-c5-v0.1.0",
+      "label": "Wigglefish ESP32-C5 passive scanner v0.1.0",
+      "chipFamilies": ["ESP32-C5"],
+      "eligibleProfiles": ["WT013261-S5", "WT018684-S5"],
+      "available": true,
+      "flashSizeBytes": 4194304,
+      "releaseTag": "firmware-v0.1.0",
+      "notes": "Packaged from draft GitHub release firmware-v0.1.0 (bootloader@0x2000, partition@0x8000, app@0x10000). Passive Wi-Fi/BLE metadata only.",
+      "parts": [
+        { "asset": "firmware/esp32c5/bootloader.bin", "offset": 8192, "label": "bootloader" },
+        { "asset": "firmware/esp32c5/partition-table.bin", "offset": 32768, "label": "partition-table" },
+        { "asset": "firmware/esp32c5/wigglefish_firmware.bin", "offset": 65536, "label": "app" }
+      ]
+    },
+    {
+      "id": "stub-c3",
+      "label": "ESP32-C3 — no packaged image yet",
+      "chipFamilies": ["ESP32-C3"],
+      "eligibleProfiles": ["WT32C3-S5", "WT018684-S5"],
+      "available": false,
+      "notes": "Honest stub: Identify works for C3, but no Wigglefish C3 firmware is packaged in-app yet. Use desktop idf.py / ESP Web Tools when a C3 build exists."
+    },
+    {
+      "id": "stub-esp32",
+      "label": "Classic ESP32 — no packaged image yet",
+      "chipFamilies": ["ESP32"],
+      "eligibleProfiles": ["WT018684-S5"],
+      "available": false,
+      "notes": "Honest stub: classic ESP32 may Identify, but Wigglefish ships an ESP32-C5 image only."
+    }
+  ]
+}

@@ -22,7 +22,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="PR1 — IDENTIFY CHIP (native ROM probe)"
+            android:text="PR2 — IDENTIFY + IN-APP FLASH WRITE"
             android:textColor="#F0B35A"
             android:textSize="13sp"
             android:textStyle="bold" />
@@ -33,7 +33,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:fontFamily="monospace"
-            android:text="Plug board via USB-C OTG (data cable). Then Connect → Identify."
+            android:text="Plug board via USB-C OTG (data cable). Connect → Identify → select image → Flash."
             android:textColor="#8FF7FF"
             android:textSize="12sp" />
 
@@ -98,12 +98,99 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="FIRMWARE IMAGE"
+            android:textColor="#F0B35A"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <Spinner
+            android:id="@+id/firmwareSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:minHeight="48dp"
+            android:background="#10142B"
+            android:padding="8dp" />
+
+        <TextView
+            android:id="@+id/firmwareNotesText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:fontFamily="monospace"
+            android:text="Identify a chip to list compatible images."
+            android:textColor="#D6D9FF"
+            android:textSize="11sp" />
+
+        <Button
+            android:id="@+id/flashWriteButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:minHeight="52dp"
+            android:enabled="false"
+            android:text="FLASH SELECTED IMAGE"
+            android:textColor="#050611"
+            android:backgroundTint="#7CFFB2" />
+
+        <ProgressBar
+            android:id="@+id/flashProgressBar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:max="100"
+            android:progress="0"
+            android:progressTint="#8FF7FF" />
+
+        <TextView
+            android:id="@+id/flashProgressText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:fontFamily="monospace"
+            android:text="Idle"
+            android:textColor="#8FF7FF"
+            android:textSize="12sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="#10142B"
+            android:padding="16dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="FLASH LOG"
+                android:textColor="#F0B35A"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/flashLogText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:fontFamily="monospace"
+                android:lineSpacingExtra="4dp"
+                android:text="Flow: IDENTIFY → select compatible image → FLASH → reset to run → Live Field / Connect.\nKotlin ROM protocol (SYNC / SPI_ATTACH / FLASH_BEGIN+DATA / MD5). Not Python esptool."
+                android:textColor="#D6D9FF"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
             android:background="#10142B"
             android:padding="12dp"
             android:fontFamily="monospace"
             android:lineSpacingExtra="4dp"
-            android:text="Flow: DETECT (this page) → FLASH (PR2) → DRIVE (Live Field).\nFull in-app flash is not in this PR. Desktop ESP Web Tools still works.\n\nOTG: use a data-capable USB-C OTG adapter; charge-only cables fail silently.\nCH343 boards may need a moment after plug before Identify."
+            android:text="OTG: use a data-capable USB-C OTG adapter; charge-only cables fail silently.\nFlash of ~1.3 MB at 115200–460800 can take 1–3 minutes — keep the cable still.\nC3 / classic ESP32 images are stubbed until packaged builds exist."
             android:textColor="#D6D9FF"
             android:textSize="11sp" />
 

@@ -10,6 +10,8 @@ interface SurveyHost {
     fun requestUsbConnectionForFlash()
     /** ROM bootloader identify (chip family / MAC / USB descriptors). */
     fun requestEspIdentify()
+    /** Flash a catalog image id over USB OTG (Kotlin ROM protocol). */
+    fun requestEspFlash(imageId: String)
     fun togglePhoneCollection()
     fun toggleUsbCollection()
     fun shareSessionJson()

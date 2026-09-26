@@ -162,6 +162,11 @@ class UsbSerialController(
         return if (count <= 0) ByteArray(0) else buffer.copyOf(count)
     }
 
+    override fun setBaudRate(baud: Int) {
+        val serialPort = port ?: throw IOException("USB port not open")
+        serialPort.setParameters(baud, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE)
+    }
+
     override fun purgeInput() {
         val serialPort = port ?: return
         try {
