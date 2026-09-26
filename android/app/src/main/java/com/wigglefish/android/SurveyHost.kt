@@ -14,8 +14,13 @@ interface SurveyHost {
     fun requestEspFlash(imageId: String)
     fun togglePhoneCollection()
     fun toggleUsbCollection()
+    /** Stop phone + USB collection in one tap (safe utility). */
+    fun stopAllCollection()
     fun shareSessionJson()
     fun shareSessionCsv()
+    fun shareWardriveGoCsv()
+    fun shareWigleCsv()
+    fun shareGeoJson()
     fun clearSession()
     fun navigateTo(destinationId: Int)
 }

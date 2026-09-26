@@ -20,6 +20,7 @@ class HomeFragment : Fragment() {
         val statusText = view.findViewById<TextView>(R.id.statusText)
         val strongestText = view.findViewById<TextView>(R.id.strongestText)
         val sessionText = view.findViewById<TextView>(R.id.sessionText)
+        val coverageText = view.findViewById<TextView>(R.id.coverageText)
         val countText = view.findViewById<TextView>(R.id.countText)
         val bleCountText = view.findViewById<TextView>(R.id.bleCountText)
         val gpsCountText = view.findViewById<TextView>(R.id.gpsCountText)
@@ -38,14 +39,22 @@ class HomeFragment : Fragment() {
         view.findViewById<Button>(R.id.openFlashButton).setOnClickListener {
             host.navigateTo(R.id.flashFragment)
         }
+        view.findViewById<Button>(R.id.stopAllButton).setOnClickListener {
+            host.stopAllCollection()
+        }
 
         session.ui.observe(viewLifecycleOwner) { state ->
             statusText.text = state.status
             strongestText.text = state.strongest
             sessionText.text = state.session
+            coverageText.text = state.coverageHint
             countText.text = "${state.wifiCount}\nWi-Fi"
             bleCountText.text = "${state.bleCount}\nBLE"
-            gpsCountText.text = "${state.gpsSatCount}\nGPS SAT"
+            gpsCountText.text = if (state.hasGpsFix) {
+                "${state.gpsFixCount}\nGPS OK"
+            } else {
+                "${state.gpsSatCount}\nGPS SAT"
+            }
             deviceText.text = state.device
         }
     }

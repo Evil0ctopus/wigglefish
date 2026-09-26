@@ -27,6 +27,10 @@ class LiveFieldFragment : Fragment() {
         val bleCountText = view.findViewById<TextView>(R.id.bleCountText)
         val gpsCountText = view.findViewById<TextView>(R.id.gpsCountText)
         val strongestText = view.findViewById<TextView>(R.id.strongestText)
+        val sessionText = view.findViewById<TextView>(R.id.sessionText)
+        val coverageText = view.findViewById<TextView>(R.id.coverageText)
+        val locationText = view.findViewById<TextView>(R.id.locationText)
+        val host = requireActivity() as SurveyHost
 
         view.findViewById<Button>(R.id.allButton).setOnClickListener {
             session.setSelectedView("ALL")
@@ -36,6 +40,9 @@ class LiveFieldFragment : Fragment() {
         }
         view.findViewById<Button>(R.id.bleButton).setOnClickListener {
             session.setSelectedView("BLE")
+        }
+        view.findViewById<Button>(R.id.stopAllButton).setOnClickListener {
+            host.stopAllCollection()
         }
 
         session.ui.observe(viewLifecycleOwner) { state ->
@@ -47,8 +54,11 @@ class LiveFieldFragment : Fragment() {
             radarView.setSignalCount(state.signalCount)
             countText.text = "${state.wifiCount}\nWi-Fi"
             bleCountText.text = "${state.bleCount}\nBLE"
-            gpsCountText.text = "${state.gpsSatCount}\nGPS SAT"
+            gpsCountText.text = "${state.gpsFixCount}\nGPS PTS"
             strongestText.text = state.strongest
+            sessionText.text = state.session
+            coverageText.text = state.coverageHint
+            locationText.text = state.location
         }
     }
 }

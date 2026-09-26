@@ -31,7 +31,6 @@ import com.wigglefish.android.esp.EspIdentifyResult
 import com.wigglefish.android.esp.EspRomFlasher
 import com.wigglefish.android.esp.EspRomIdentifier
 import com.wigglefish.android.esp.FirmwareCatalog
-import org.json.JSONArray
 import org.json.JSONObject
 
 class MainActivity : AppCompatActivity(), SurveyHost {
@@ -101,9 +100,21 @@ class MainActivity : AppCompatActivity(), SurveyHost {
     private val locationListener = object : LocationListener {
         override fun onLocationChanged(location: Location) {
             lastLocation = location
+            val fix = GpsFix(
+                timestampMs = location.time.takeIf { it > 0L } ?: System.currentTimeMillis(),
+                latitude = location.latitude,
+                longitude = location.longitude,
+                accuracyM = location.accuracy,
+                altitudeM = if (location.hasAltitude()) location.altitude else null,
+                provider = location.provider ?: "",
+            )
+            session.updateGpsFix(fix)
             session.setLocationText(
-                "GPS LOCK  %.5f, %.5f   +/- %.0fm".format(
-                    location.latitude, location.longitude, location.accuracy,
+                "GPS LOCK  %.5f, %.5f   +/- %.0fm  via %s".format(
+                    location.latitude,
+                    location.longitude,
+                    location.accuracy,
+                    location.provider ?: "?",
                 ),
             )
         }
@@ -129,11 +140,13 @@ class MainActivity : AppCompatActivity(), SurveyHost {
                 val message = JSONObject().apply {
                     put("type", "wifi")
                     put("source", "PHONE")
-                    put("ssid", result.SSID)
-                    put("bssid", result.BSSID)
+                    put("ssid", result.SSID ?: "")
+                    put("bssid", result.BSSID ?: "")
                     put("channel", frequencyToChannel(result.frequency))
+                    put("frequency", result.frequency)
                     put("rssi", result.level)
-                    put("security", "PHONE_SCAN")
+                    put("security", result.capabilities ?: "PHONE_SCAN")
+                    put("capabilities", result.capabilities ?: "")
                 }
                 handleLine(message.toString())
             }
@@ -538,6 +551,20 @@ class MainActivity : AppCompatActivity(), SurveyHost {
         }
     }
 
+    override fun stopAllCollection() {
+        if (session.isPhoneCollectionEnabled()) {
+            session.setPhoneCollectionEnabled(false)
+            stopPhoneLocation()
+            stopPhoneWireless()
+        }
+        if (session.isUsbCollectionEnabled()) {
+            session.setUsbCollectionEnabled(false)
+            serial.disconnect()
+        }
+        session.setStatus("All collection stopped (phone + USB)")
+        Toast.makeText(this, "Stopped phone + USB collection", Toast.LENGTH_SHORT).show()
+    }
+
     override fun clearSession() {
         session.clearObservations()
         sessionLogFile.delete()
@@ -547,44 +574,83 @@ class MainActivity : AppCompatActivity(), SurveyHost {
     }
 
     override fun shareSessionJson() {
-        val records = session.snapshotRawRecords()
+        val records = session.snapshotObservations()
         if (records.isEmpty()) {
             Toast.makeText(this, "No observations to export yet", Toast.LENGTH_SHORT).show()
             return
         }
-        val payload = JSONArray(records)
-        val shareIntent = Intent(Intent.ACTION_SEND).apply {
-            type = "application/json"
-            putExtra(Intent.EXTRA_SUBJECT, "Wigglefish passive survey")
-            putExtra(Intent.EXTRA_TEXT, payload.toString(2))
-        }
-        startActivity(Intent.createChooser(shareIntent, "Export survey session"))
+        val payload = WardriveExporter.buildJson(
+            records = records,
+            summary = session.sessionSummary(),
+            gpsFixes = session.snapshotGpsFixes(),
+        )
+        shareText("Wigglefish wardrive JSON", "application/json", payload, "Export wardrive JSON")
     }
 
     override fun shareSessionCsv() {
-        val records = session.snapshotRawRecords()
+        val records = session.snapshotObservations()
         if (records.isEmpty()) {
             Toast.makeText(this, "No observations to export yet", Toast.LENGTH_SHORT).show()
             return
         }
-        val rows = mutableListOf("MAC,SSID,AUTH,CHANNEL,RSSI,TYPE,NAME")
-        records.forEach { record ->
-            val type = record.optString("type")
-            val mac = record.optString("bssid").ifEmpty { record.optString("mac") }
-            val ssid = record.optString("ssid")
-            val auth = record.optString("encryption", record.optString("security"))
-            val channel = record.optInt("channel", 0).toString()
-            val rssi = record.optInt("rssi", 0).toString()
-            val name = record.optString("name")
-            rows += listOf(mac, ssid, auth, channel, rssi, type, name)
-                .joinToString(",") { value -> "\"${value.replace("\"", "\"\"")}\"" }
+        shareText(
+            "Wigglefish CSV",
+            "text/csv",
+            WardriveExporter.buildGenericCsv(records),
+            "Export CSV",
+        )
+    }
+
+    override fun shareWardriveGoCsv() {
+        val records = session.snapshotObservations()
+        if (records.isEmpty()) {
+            Toast.makeText(this, "No observations to export yet", Toast.LENGTH_SHORT).show()
+            return
         }
+        shareText(
+            "Wigglefish Wardrive Go CSV",
+            "text/csv",
+            WardriveExporter.buildWardriveGoCsv(records),
+            "Export Wardrive Go CSV",
+        )
+    }
+
+    override fun shareWigleCsv() {
+        val records = session.snapshotObservations()
+        if (records.isEmpty()) {
+            Toast.makeText(this, "No observations to export yet", Toast.LENGTH_SHORT).show()
+            return
+        }
+        shareText(
+            "Wigglefish WiGLE CSV",
+            "text/csv",
+            WardriveExporter.buildWigleCsv(records),
+            "Export WiGLE CSV",
+        )
+    }
+
+    override fun shareGeoJson() {
+        val records = session.snapshotObservations()
+        val fixes = session.snapshotGpsFixes()
+        if (records.isEmpty() && fixes.isEmpty()) {
+            Toast.makeText(this, "No observations to export yet", Toast.LENGTH_SHORT).show()
+            return
+        }
+        shareText(
+            "Wigglefish GeoJSON",
+            "application/geo+json",
+            WardriveExporter.buildGeoJson(records, fixes),
+            "Export GeoJSON",
+        )
+    }
+
+    private fun shareText(subject: String, mime: String, body: String, chooserTitle: String) {
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
-            type = "text/csv"
-            putExtra(Intent.EXTRA_SUBJECT, "Wigglefish wardrive CSV")
-            putExtra(Intent.EXTRA_TEXT, rows.joinToString("\n"))
+            type = mime
+            putExtra(Intent.EXTRA_SUBJECT, subject)
+            putExtra(Intent.EXTRA_TEXT, body)
         }
-        startActivity(Intent.createChooser(shareIntent, "Export wardrive CSV"))
+        startActivity(Intent.createChooser(shareIntent, chooserTitle))
     }
 
     private fun startPhoneLocation() {
