@@ -22,8 +22,8 @@ android {
         applicationId = "com.wigglefish.android"
         minSdk = 26
         targetSdk = 35
-        versionCode = 3
-        versionName = "0.3.0"
+        versionCode = 4
+        versionName = "0.4.0"
     }
 
     signingConfigs {
@@ -67,4 +67,5 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.7")
     implementation("com.github.mik3y:usb-serial-for-android:3.9.0")
+    implementation("org.osmdroid:osmdroid-android:6.1.20")
 }

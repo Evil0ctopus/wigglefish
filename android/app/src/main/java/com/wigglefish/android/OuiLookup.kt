@@ -1,147 +1,75 @@
 package com.wigglefish.android
 
+import android.content.Context
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.util.zip.GZIPInputStream
+
 /**
- * Lightweight OUI → vendor lookup for passive survey enrichment.
- * Common prefixes only; unknown OUIs return empty string.
+ * OUI → vendor lookup backed by a compressed Wireshark `manuf` asset.
+ * Graceful: unknown prefixes return empty string. Init once from Application/Activity.
  */
 object OuiLookup {
-    private val vendors = mapOf(
-        "000C41" to "Cisco",
-        "001A2B" to "Cisco",
-        "0022CE" to "Cisco",
-        "001B67" to "Cisco",
-        "F87B8C" to "Cisco",
-        "001E13" to "Cisco",
-        "0017DF" to "Cisco",
-        "0014BF" to "Cisco",
-        "00D0D0" to "Cisco",
-        "000ED7" to "Cisco",
-        "001560" to "Hewlett Packard",
-        "3C5A37" to "Apple",
-        "A4C361" to "Apple",
-        "F0D1A9" to "Apple",
-        "ACBC32" to "Apple",
-        "88C663" to "Apple",
-        "001124" to "Apple",
-        "001451" to "Apple",
-        "28CFDA" to "Apple",
-        "DC2B61" to "Apple",
-        "0010FA" to "Apple",
-        "0017F2" to "Apple",
-        "001B63" to "Apple",
-        "001EC2" to "Apple",
-        "B827EB" to "Raspberry Pi",
-        "DCA632" to "Raspberry Pi",
-        "E45F01" to "Raspberry Pi",
-        "B8C253" to "Juniper",
-        "0017CB" to "Juniper",
-        "0019E2" to "Juniper",
-        "001CF0" to "D-Link",
-        "0015E9" to "D-Link",
-        "14D64D" to "D-Link",
-        "C8D3A3" to "D-Link",
-        "001346" to "Netgear",
-        "001E2A" to "Netgear",
-        "0024B2" to "Netgear",
-        "A040A0" to "Netgear",
-        "20E52A" to "Netgear",
-        "00095B" to "Netgear",
-        "0026F2" to "Netgear",
-        "C0468D" to "TP-Link",
-        "50C7BF" to "TP-Link",
-        "14CC20" to "TP-Link",
-        "EC086B" to "TP-Link",
-        "B0BE76" to "TP-Link",
-        "001D0F" to "TP-Link",
-        "F4EC38" to "TP-Link",
-        "0019E0" to "TP-Link",
-        "001A70" to "Cisco-Linksys",
-        "0018F8" to "Cisco-Linksys",
-        "00259C" to "Cisco-Linksys",
-        "C83A35" to "Tenda",
-        "C8D7B0" to "Xiaomi",
-        "28E31F" to "Xiaomi",
-        "640980" to "Xiaomi",
-        "001E58" to "Ubiquiti",
-        "24A43C" to "Ubiquiti",
-        "FCECDA" to "Ubiquiti",
-        "802AA8" to "Ubiquiti",
-        "18E829" to "Ubiquiti",
-        "0418D6" to "Ubiquiti",
-        "B4FBE4" to "Ubiquiti",
-        "788A20" to "Ubiquiti",
-        "00156D" to "Ubiquiti",
-        "002722" to "Ubiquiti",
-        "44D9E7" to "Ubiquiti",
-        "FC0FEE" to "Amazon",
-        "0C47C9" to "Amazon",
-        "50F5DA" to "Amazon",
-        "001E42" to "Teltonika",
-        "0013CE" to "Intel",
-        "001B77" to "Intel",
-        "3C970E" to "Intel",
-        "A0A65C" to "Intel",
-        "001517" to "Intel",
-        "001DD8" to "Broadcom",
-        "000B86" to "Aruba",
-        "001A1E" to "Aruba",
-        "24DEC6" to "Aruba",
-        "D8C7C8" to "Aruba",
-        "001A92" to "ASUS",
-        "04D4C4" to "ASUS",
-        "2C56DC" to "ASUS",
-        "1C872C" to "ASUS",
-        "AC220B" to "ASUS",
-        "001E8C" to "ASUS",
-        "002618" to "ASUS",
-        "00E018" to "ASUS",
-        "00E04C" to "Realtek",
-        "000C29" to "VMware",
-        "005056" to "VMware",
-        "525400" to "QEMU",
-        "00155D" to "Microsoft Hyper-V",
-        "F8FFC2" to "Samsung",
-        "001632" to "Samsung",
-        "0023D6" to "Samsung",
-        "5C0A5B" to "Samsung",
-        "8C7712" to "Samsung",
-        "38192F" to "Espressif",
-        "246F28" to "Espressif",
-        "30AEA4" to "Espressif",
-        "24B2DE" to "Espressif",
-        "840D8E" to "Espressif",
-        "A020A6" to "Espressif",
-        "CC50E3" to "Espressif",
-        "C44F33" to "Espressif",
-        "7CDFA1" to "Espressif",
-        "10521C" to "Espressif",
-        "E8DB84" to "Espressif",
-        "94B97E" to "Espressif",
-        "B4E62D" to "Espressif",
-        "4C7525" to "Espressif",
-        "08D1F9" to "Espressif",
-        "DC4F22" to "Espressif",
-        "98CDAC" to "Espressif",
-        "686372" to "Huawei",
-        "001E10" to "Huawei",
-        "00E0FC" to "Huawei",
-        "04C06F" to "Huawei",
-        "0C37DC" to "Huawei",
-        "20F3A3" to "Huawei",
-        "285FDB" to "Huawei",
-        "00A0C5" to "Zyxel",
-        "001349" to "Zyxel",
-        "B0B2DC" to "Zyxel",
-        "FC220C" to "Google",
-        "F4F5E8" to "Google",
-        "3C5AB4" to "Google",
-        "0024A5" to "Buffalo",
-        "001BA9" to "Brother",
-    )
+    @Volatile
+    private var ready = false
+    private val lock = Any()
+
+    /** 24-bit (6 hex) prefix → vendor */
+    private val vendors24 = HashMap<String, String>(65536)
+
+    /** Longer prefixes (28/36-bit etc.), keyed by full hex prefix (length > 6). */
+    private val vendorsLong = HashMap<String, String>(4096)
+
+    fun ensureLoaded(context: Context) {
+        if (ready) return
+        synchronized(lock) {
+            if (ready) return
+            try {
+                context.applicationContext.assets.open("oui_manuf.gz").use { raw ->
+                    GZIPInputStream(raw).use { gz ->
+                        BufferedReader(InputStreamReader(gz, Charsets.UTF_8)).use { reader ->
+                            var line: String?
+                            while (true) {
+                                line = reader.readLine() ?: break
+                                if (line.isEmpty() || line.startsWith("#")) continue
+                                val tab = line.indexOf('\t')
+                                if (tab <= 0) continue
+                                val key = line.substring(0, tab).trim().uppercase()
+                                val vendor = line.substring(tab + 1).trim()
+                                if (key.length < 6 || vendor.isEmpty()) continue
+                                if (key.length == 6) {
+                                    vendors24[key] = vendor
+                                } else {
+                                    vendorsLong[key] = vendor
+                                }
+                            }
+                        }
+                    }
+                }
+                ready = true
+            } catch (_: Exception) {
+                // Keep empty tables; vendorFor still returns "".
+                ready = true
+            }
+        }
+    }
+
+    fun isReady(): Boolean = ready
+
+    fun entryCount(): Int = vendors24.size + vendorsLong.size
 
     fun vendorFor(mac: String): String {
         val cleaned = mac.uppercase().replace(Regex("[^0-9A-F]"), "")
         if (cleaned.length < 6) return ""
-        return vendors[cleaned.substring(0, 6)] ?: ""
+        // Longest-prefix match among known longer OUIs first (e.g. 9 hex = 36-bit).
+        if (vendorsLong.isNotEmpty()) {
+            var len = cleaned.length.coerceAtMost(12)
+            while (len > 6) {
+                val hit = vendorsLong[cleaned.substring(0, len)]
+                if (hit != null) return hit
+                len--
+            }
+        }
+        return vendors24[cleaned.substring(0, 6)] ?: ""
     }
 }

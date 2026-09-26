@@ -182,6 +182,42 @@ data class ObservationRecord(
             lastRssi = rssi,
             lastGps = gps,
         )
+
+        fun fromJson(obj: JSONObject): ObservationRecord {
+            val type = obj.optString("type", "wifi")
+            val mac = obj.optString("mac").ifEmpty {
+                obj.optString("bssid").ifEmpty { obj.optString("address") }
+            }
+            val name = if (type == "wifi") {
+                obj.optString("ssid").ifEmpty { obj.optString("name") }
+            } else {
+                obj.optString("name").ifEmpty { obj.optString("ssid") }
+            }
+            val hit = obj.optInt("hitCount", 1).coerceAtLeast(1)
+            val lastRssi = obj.optInt("rssi", obj.optInt("lastRssi", 0))
+            val peak = obj.optInt("peakRssi", lastRssi)
+            val avg = obj.optInt("avgRssi", lastRssi)
+            val rssiSum = avg.toLong() * hit
+            val key = obj.optString("key").ifEmpty { "$type:$mac" }
+            return ObservationRecord(
+                key = key,
+                type = type,
+                mac = mac,
+                ssidOrName = name,
+                channel = obj.optInt("channel", 0),
+                frequencyMhz = obj.optInt("frequency", obj.optInt("frequencyMhz", 0)),
+                security = obj.optString("security").ifEmpty { obj.optString("encryption") },
+                vendor = obj.optString("vendor").ifEmpty { OuiLookup.vendorFor(mac) },
+                source = obj.optString("source", ""),
+                firstSeenMs = obj.optLong("firstSeenMs", 0L),
+                lastSeenMs = obj.optLong("lastSeenMs", 0L),
+                hitCount = hit,
+                peakRssi = peak,
+                rssiSum = rssiSum,
+                lastRssi = lastRssi,
+                lastGps = GpsFix.fromJson(obj.optJSONObject("gps")),
+            )
+        }
     }
 }
 
@@ -193,13 +229,49 @@ data class SessionSummary(
     val observationHits: Int,
     val qualityLabel: String,
     val hasGpsFix: Boolean,
+    val observationsWithGps: Int = 0,
+    val observationsWithoutGps: Int = 0,
+    val distanceMeters: Double = 0.0,
+    val gpsFixRatePerMin: Double = 0.0,
+    val channelHistogram: Map<Int, Int> = emptyMap(),
 ) {
-    fun formatLine(): String {
+    fun formatDuration(): String {
         val durSec = (durationMs / 1000L).coerceAtLeast(0L)
-        val mm = durSec / 60
+        val hh = durSec / 3600
+        val mm = (durSec % 3600) / 60
         val ss = durSec % 60
-        return "SESSION  %02d:%02d  Wi-Fi %d  BLE %d  GPS pts %d  hits %d  quality %s".format(
-            mm, ss, uniqueWifi, uniqueBle, gpsPointCount, observationHits, qualityLabel,
+        return if (hh > 0) "%d:%02d:%02d".format(hh, mm, ss) else "%02d:%02d".format(mm, ss)
+    }
+
+    fun formatLine(): String {
+        val dist = when {
+            distanceMeters <= 0.0 -> ""
+            distanceMeters < 1000.0 -> "  ~%.0fm".format(distanceMeters)
+            else -> "  ~%.2fkm".format(distanceMeters / 1000.0)
+        }
+        return "SESSION  %s  Wi-Fi %d  BLE %d  GPS pts %d  hits %d  quality %s%s".format(
+            formatDuration(), uniqueWifi, uniqueBle, gpsPointCount, observationHits, qualityLabel, dist,
+        )
+    }
+
+    fun formatCoverageDetail(): String {
+        val gpsBit = if (hasGpsFix || gpsPointCount > 0) {
+            "GPS %d pts (%.1f/min)  geo'd %d / bare %d".format(
+                gpsPointCount, gpsFixRatePerMin, observationsWithGps, observationsWithoutGps,
+            )
+        } else {
+            "no GPS fix — WiGLE/GeoJSON need coordinates"
+        }
+        val topCh = channelHistogram.entries.sortedByDescending { it.value }.take(5)
+            .joinToString(" ") { "ch${it.key}:${it.value}" }
+            .ifEmpty { "no channel hits" }
+        val dist = when {
+            distanceMeters <= 0.0 -> "track n/a"
+            distanceMeters < 1000.0 -> "track ~%.0fm".format(distanceMeters)
+            else -> "track ~%.2fkm".format(distanceMeters / 1000.0)
+        }
+        return "COVERAGE  %s  |  %s  |  %s  |  %s".format(
+            qualityLabel.uppercase(), gpsBit, dist, topCh,
         )
     }
 }

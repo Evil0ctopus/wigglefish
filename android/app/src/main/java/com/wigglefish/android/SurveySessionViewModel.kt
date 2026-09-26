@@ -29,6 +29,9 @@ data class SurveyUiState(
     val usbCollectionOn: Boolean = true,
     val connectButtonLabel: String = "CONNECT USB",
     val selectedView: String = "ALL",
+    val loadedSessionLabel: String = "",
+    val observationsWithGps: Int = 0,
+    val distanceMeters: Double = 0.0,
 )
 
 data class IdentifyUiState(
@@ -63,6 +66,9 @@ class SurveySessionViewModel : ViewModel() {
     private val sourceCounts = linkedMapOf<String, Int>()
 
     private var sessionStartedAt = System.currentTimeMillis()
+    private var sessionEndedAt: Long? = null
+    private var loadedSessionLabel: String = ""
+    private var frozenSummary: SessionSummary? = null
     private var scanPasses = 0
     private var lastObservationAt = 0L
     private var selectedView = "ALL"
@@ -97,13 +103,18 @@ class SurveySessionViewModel : ViewModel() {
     fun currentGpsFix(): GpsFix? = currentGps
 
     fun sessionSummary(): SessionSummary {
-        val now = System.currentTimeMillis()
-        val duration = (now - sessionStartedAt).coerceAtLeast(0L)
+        frozenSummary?.let { return it }
+        val end = sessionEndedAt ?: System.currentTimeMillis()
+        val duration = (end - sessionStartedAt).coerceAtLeast(0L)
         val uniqueWifi = observations.values.count { it.type == "wifi" }
         val uniqueBle = observations.values.count { it.type == "ble" }
         val hits = observations.values.sumOf { it.hitCount }
         val gpsCount = gpsFixes.size
-        val hasFix = currentGps != null
+        val hasFix = currentGps != null || gpsCount > 0
+        val withGps = observations.values.count { it.lastGps != null }
+        val withoutGps = observations.size - withGps
+        val minutes = (duration / 60000.0).coerceAtLeast(0.05)
+        val dist = trackDistanceMeters()
         val quality = qualityLabel(duration, uniqueWifi, uniqueBle, gpsCount, hasFix)
         return SessionSummary(
             durationMs = duration,
@@ -113,7 +124,66 @@ class SurveySessionViewModel : ViewModel() {
             observationHits = hits,
             qualityLabel = quality,
             hasGpsFix = hasFix,
+            observationsWithGps = withGps,
+            observationsWithoutGps = withoutGps,
+            distanceMeters = dist,
+            gpsFixRatePerMin = gpsCount / minutes,
+            channelHistogram = wifiChannels.toMap(),
         )
+    }
+
+    fun trackDistanceMeters(): Double {
+        if (gpsFixes.size < 2) return 0.0
+        var sum = 0.0
+        for (i in 1 until gpsFixes.size) {
+            sum += distanceRoughMeters(gpsFixes[i - 1], gpsFixes[i])
+        }
+        return sum
+    }
+
+    fun mapMarkers(): List<ObservationRecord> =
+        observations.values.filter { it.lastGps != null }
+
+    fun replaceSession(
+        records: List<ObservationRecord>,
+        summary: SessionSummary,
+        fixes: List<GpsFix>,
+        label: String,
+    ) {
+        observations.clear()
+        records.forEach { observations[it.key] = it }
+        wifiChannels.clear()
+        summary.channelHistogram.forEach { (ch, hits) -> wifiChannels[ch] = hits }
+        if (wifiChannels.isEmpty()) {
+            records.filter { it.type == "wifi" && it.channel > 0 }.forEach { r ->
+                wifiChannels[r.channel] = (wifiChannels[r.channel] ?: 0) + r.hitCount
+            }
+        }
+        gpsFixes.clear()
+        gpsFixes.addAll(fixes)
+        currentGps = fixes.lastOrNull()
+        sessionStartedAt = System.currentTimeMillis() - summary.durationMs
+        sessionEndedAt = System.currentTimeMillis()
+        frozenSummary = summary
+        loadedSessionLabel = label
+        decodeText = "Loaded archived session: $label"
+        publish()
+    }
+
+    fun beginNewLiveSession() {
+        frozenSummary = null
+        sessionEndedAt = null
+        loadedSessionLabel = ""
+        sessionStartedAt = System.currentTimeMillis()
+        publish()
+    }
+
+    fun markSessionEnded() {
+        if (sessionEndedAt == null) {
+            sessionEndedAt = System.currentTimeMillis()
+            frozenSummary = null
+        }
+        publish()
     }
 
     fun isPhoneCollectionEnabled(): Boolean = phoneCollectionEnabled
@@ -143,6 +213,11 @@ class SurveySessionViewModel : ViewModel() {
     }
 
     fun updateGpsFix(fix: GpsFix) {
+        if (frozenSummary != null) {
+            frozenSummary = null
+            sessionEndedAt = null
+            loadedSessionLabel = ""
+        }
         currentGps = fix
         // Deduplicate near-identical consecutive fixes (time + position).
         val last = gpsFixes.lastOrNull()
@@ -208,6 +283,11 @@ class SurveySessionViewModel : ViewModel() {
     }
 
     fun ingestWifi(message: JSONObject): String? {
+        if (frozenSummary != null) {
+            frozenSummary = null
+            sessionEndedAt = null
+            loadedSessionLabel = ""
+        }
         val ssid = message.optString("ssid").ifEmpty { "<hidden>" }
         val bssid = message.optString("bssid").ifEmpty { message.optString("mac") }
         val channel = message.optInt("channel")
@@ -256,6 +336,11 @@ class SurveySessionViewModel : ViewModel() {
     }
 
     fun ingestBle(message: JSONObject): String? {
+        if (frozenSummary != null) {
+            frozenSummary = null
+            sessionEndedAt = null
+            loadedSessionLabel = ""
+        }
         val address = message.optString("address").ifEmpty { message.optString("mac") }
         val name = message.optString("name").ifEmpty { address }
         val key = address.ifEmpty { "ble:$name" }
@@ -360,7 +445,11 @@ class SurveySessionViewModel : ViewModel() {
         scanPasses = 0
         lastObservationAt = 0L
         decodeText = ""
+        currentGps = null
         sessionStartedAt = System.currentTimeMillis()
+        sessionEndedAt = null
+        frozenSummary = null
+        loadedSessionLabel = ""
         publish()
     }
 
@@ -408,6 +497,9 @@ class SurveySessionViewModel : ViewModel() {
             usbCollectionOn = usbCollectionEnabled,
             connectButtonLabel = connectButtonLabel,
             selectedView = selectedView,
+            loadedSessionLabel = loadedSessionLabel,
+            observationsWithGps = summary.observationsWithGps,
+            distanceMeters = summary.distanceMeters,
         )
     }
 
@@ -457,14 +549,7 @@ class SurveySessionViewModel : ViewModel() {
         }
     }
 
-    private fun coverageHint(summary: SessionSummary): String {
-        val gpsBit = if (summary.hasGpsFix) {
-            "GPS fix OK (${summary.gpsPointCount} pts)"
-        } else {
-            "no GPS fix yet — exports will lack coordinates"
-        }
-        return "COVERAGE  ${summary.qualityLabel.uppercase(Locale.US)}  |  $gpsBit  |  ${summary.uniqueWifi} AP / ${summary.uniqueBle} BLE"
-    }
+    private fun coverageHint(summary: SessionSummary): String = summary.formatCoverageDetail()
 
     private fun distanceRoughMeters(a: GpsFix, b: GpsFix): Double {
         val latMid = Math.toRadians((a.latitude + b.latitude) / 2.0)

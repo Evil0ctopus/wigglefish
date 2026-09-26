@@ -49,6 +49,7 @@ class MainActivity : AppCompatActivity(), SurveyHost {
     private var lastDecodedSatelliteCount = -1
     private val sessionLogFile by lazy { File(filesDir, "wigglefish-session.jsonl") }
     private val usbLogFile by lazy { File(filesDir, "wigglefish-usb-devices.jsonl") }
+    private val sessionArchive by lazy { SessionArchive(this) }
     private val uiHandler = Handler(Looper.getMainLooper())
     private val decodeQueue = ArrayDeque<DecodeJob>()
     private var decodeRunning = false
@@ -169,6 +170,8 @@ class MainActivity : AppCompatActivity(), SurveyHost {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        OuiLookup.ensureLoaded(this)
+        SurveyMapController.init(this)
 
         val navHost = supportFragmentManager.findFragmentById(R.id.navHostFragment) as NavHostFragment
         val navController = navHost.navController
@@ -566,11 +569,115 @@ class MainActivity : AppCompatActivity(), SurveyHost {
     }
 
     override fun clearSession() {
+        val records = session.snapshotObservations()
+        val fixes = session.snapshotGpsFixes()
+        if (records.isNotEmpty() || fixes.isNotEmpty()) {
+            sessionArchive.saveSession(records, session.sessionSummary(), fixes)
+            Toast.makeText(this, "Session archived before clear", Toast.LENGTH_SHORT).show()
+        }
         session.clearObservations()
         sessionLogFile.delete()
         usbLogFile.delete()
         decodeQueue.clear()
         decodeRunning = false
+    }
+
+    override fun saveCurrentSession() {
+        val records = session.snapshotObservations()
+        val fixes = session.snapshotGpsFixes()
+        if (records.isEmpty() && fixes.isEmpty()) {
+            Toast.makeText(this, "Nothing to save yet", Toast.LENGTH_SHORT).show()
+            return
+        }
+        session.markSessionEnded()
+        val meta = sessionArchive.saveSession(records, session.sessionSummary(), fixes)
+        if (meta != null) {
+            Toast.makeText(this, "Saved ${meta.label}", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "Save failed", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    override fun listArchivedSessions(): List<SessionArchive.SessionMeta> =
+        sessionArchive.listSessions()
+
+    override fun loadArchivedSession(fileName: String) {
+        val loaded = sessionArchive.loadSession(fileName)
+        if (loaded == null) {
+            Toast.makeText(this, "Could not load session", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val (records, summary, fixes) = loaded
+        val label = sessionArchive.listSessions().firstOrNull { it.fileName == fileName }?.label ?: fileName
+        session.replaceSession(records, summary, fixes, label)
+        navigateTo(R.id.liveFieldFragment)
+    }
+
+    override fun deleteArchivedSession(fileName: String) {
+        if (sessionArchive.deleteSession(fileName)) {
+            Toast.makeText(this, "Deleted archived session", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "Delete failed", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    override fun exportArchivedSession(fileName: String, format: String) {
+        val loaded = sessionArchive.loadSession(fileName) ?: run {
+            Toast.makeText(this, "Could not load session", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val (records, summary, fixes) = loaded
+        when (format) {
+            "json" -> shareText(
+                "Wigglefish wardrive JSON",
+                "application/json",
+                WardriveExporter.buildJson(records, summary, fixes),
+                "Export wardrive JSON",
+            )
+            "csv" -> shareText(
+                "Wigglefish CSV",
+                "text/csv",
+                WardriveExporter.buildGenericCsv(records),
+                "Export CSV",
+            )
+            "wardrive" -> shareText(
+                "Wigglefish Wardrive Go CSV",
+                "text/csv",
+                WardriveExporter.buildWardriveGoCsv(records),
+                "Export Wardrive Go CSV",
+            )
+            "wigle" -> {
+                val result = WardriveExporter.buildWigleCsv(records)
+                if (result.exportedRows == 0) {
+                    Toast.makeText(
+                        this,
+                        "No WiGLE rows (need GPS). Skipped ${result.skippedNoGps} without fix.",
+                        Toast.LENGTH_LONG,
+                    ).show()
+                    return
+                }
+                if (result.skippedNoGps > 0) {
+                    Toast.makeText(
+                        this,
+                        "WiGLE: ${result.exportedRows} rows, skipped ${result.skippedNoGps} without GPS",
+                        Toast.LENGTH_LONG,
+                    ).show()
+                }
+                shareText("Wigglefish WiGLE CSV", "text/csv", result.csv, "Export WiGLE CSV")
+            }
+            "geojson" -> {
+                val result = WardriveExporter.buildGeoJson(records, fixes)
+                if (result.withoutCoords > 0) {
+                    Toast.makeText(
+                        this,
+                        "GeoJSON: ${result.observationFeatures} pts, ${result.withoutCoords} still without coords",
+                        Toast.LENGTH_LONG,
+                    ).show()
+                }
+                shareText("Wigglefish GeoJSON", "application/geo+json", result.geoJson, "Export GeoJSON")
+            }
+            else -> Toast.makeText(this, "Unknown format", Toast.LENGTH_SHORT).show()
+        }
     }
 
     override fun shareSessionJson() {
@@ -621,12 +728,23 @@ class MainActivity : AppCompatActivity(), SurveyHost {
             Toast.makeText(this, "No observations to export yet", Toast.LENGTH_SHORT).show()
             return
         }
-        shareText(
-            "Wigglefish WiGLE CSV",
-            "text/csv",
-            WardriveExporter.buildWigleCsv(records),
-            "Export WiGLE CSV",
-        )
+        val result = WardriveExporter.buildWigleCsv(records)
+        if (result.exportedRows == 0) {
+            Toast.makeText(
+                this,
+                "No WiGLE rows — need GPS fixes (skipped ${result.skippedNoGps} without coords; no 0.0/0.0 placeholders)",
+                Toast.LENGTH_LONG,
+            ).show()
+            return
+        }
+        if (result.skippedNoGps > 0) {
+            Toast.makeText(
+                this,
+                "WiGLE: exported ${result.exportedRows}, skipped ${result.skippedNoGps} without GPS",
+                Toast.LENGTH_LONG,
+            ).show()
+        }
+        shareText("Wigglefish WiGLE CSV", "text/csv", result.csv, "Export WiGLE CSV")
     }
 
     override fun shareGeoJson() {
@@ -636,12 +754,15 @@ class MainActivity : AppCompatActivity(), SurveyHost {
             Toast.makeText(this, "No observations to export yet", Toast.LENGTH_SHORT).show()
             return
         }
-        shareText(
-            "Wigglefish GeoJSON",
-            "application/geo+json",
-            WardriveExporter.buildGeoJson(records, fixes),
-            "Export GeoJSON",
-        )
+        val result = WardriveExporter.buildGeoJson(records, fixes)
+        if (result.withoutCoords > 0) {
+            Toast.makeText(
+                this,
+                "GeoJSON: ${result.observationFeatures} features + track; ${result.withoutCoords} observations still without coords (documented in properties)",
+                Toast.LENGTH_LONG,
+            ).show()
+        }
+        shareText("Wigglefish GeoJSON", "application/geo+json", result.geoJson, "Export GeoJSON")
     }
 
     private fun shareText(subject: String, mime: String, body: String, chooserTitle: String) {
