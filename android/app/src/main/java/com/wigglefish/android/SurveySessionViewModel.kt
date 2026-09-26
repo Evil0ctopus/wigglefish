@@ -28,6 +28,16 @@ data class SurveyUiState(
     val selectedView: String = "ALL",
 )
 
+data class IdentifyUiState(
+    val status: String = "Plug board via USB-C OTG (data cable). Then Connect → Identify.",
+    val busy: Boolean = false,
+    val resultText: String = (
+        "Waiting for Identify…\n\n" +
+            "Chip family comes from ROM probe (SYNC + GET_SECURITY_INFO / magic).\n" +
+            "USB VID/PID alone cannot tell WT013261-S5 vs WT32C3-S5 vs WT018684-S5."
+    ),
+)
+
 /**
  * Activity-scoped session state shared by Home / Connect / Live Field / Exports fragments.
  */
@@ -53,6 +63,9 @@ class SurveySessionViewModel : ViewModel() {
 
     private val _ui = MutableLiveData(SurveyUiState())
     val ui: LiveData<SurveyUiState> = _ui
+
+    private val _identify = MutableLiveData(IdentifyUiState())
+    val identify: LiveData<IdentifyUiState> = _identify
 
     fun snapshotRawRecords(): List<JSONObject> = rawRecords.values.map { JSONObject(it.toString()) }
 
@@ -165,6 +178,23 @@ class SurveySessionViewModel : ViewModel() {
         )
         publish()
         return if (isNew) name.ifEmpty { address } else null
+    }
+
+
+    fun setIdentifyBusy(busy: Boolean, status: String? = null) {
+        val current = _identify.value ?: IdentifyUiState()
+        _identify.value = current.copy(
+            busy = busy,
+            status = status ?: current.status,
+        )
+    }
+
+    fun setIdentifyResult(status: String, resultText: String) {
+        _identify.value = IdentifyUiState(
+            status = status,
+            busy = false,
+            resultText = resultText,
+        )
     }
 
     fun clearObservations() {

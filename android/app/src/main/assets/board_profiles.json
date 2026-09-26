@@ -1,0 +1,29 @@
+[
+  {
+    "id": "WT013261-S5",
+    "label": "WT013261-S5",
+    "expectedChipFamilies": ["ESP32-C5"],
+    "usbBridge": "WCH CH343",
+    "preferredVid": "1A86",
+    "preferredPid": "55D3",
+    "notes": "Primary Wigglefish C5 target. Same VID/PID as sibling boards — use ROM identify."
+  },
+  {
+    "id": "WT32C3-S5",
+    "label": "WT32C3-S5",
+    "expectedChipFamilies": ["ESP32-C3"],
+    "usbBridge": "WCH CH343",
+    "preferredVid": "1A86",
+    "preferredPid": "55D3",
+    "notes": "ESP32-C3 board; distinguish via chip probe."
+  },
+  {
+    "id": "WT018684-S5",
+    "label": "WT018684-S5",
+    "expectedChipFamilies": ["ESP32", "ESP32-C3", "ESP32-C5"],
+    "usbBridge": "WCH CH343",
+    "preferredVid": "1A86",
+    "preferredPid": "55D3",
+    "notes": "CH343 board stub; family from Identify, not USB ID alone."
+  }
+]

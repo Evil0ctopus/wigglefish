@@ -22,10 +22,50 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="COMING SOON — honest empty state"
+            android:text="PR1 — IDENTIFY CHIP (native ROM probe)"
             android:textColor="#F0B35A"
             android:textSize="13sp"
             android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/flashStatusText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:fontFamily="monospace"
+            android:text="Plug board via USB-C OTG (data cable). Then Connect → Identify."
+            android:textColor="#8FF7FF"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/flashDeviceText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:fontFamily="monospace"
+            android:text="USB DEVICE  NO USB DEVICE"
+            android:textColor="#D6D9FF"
+            android:textSize="11sp" />
+
+        <Button
+            android:id="@+id/flashConnectButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:minHeight="52dp"
+            android:text="CONNECT / USE USB DEVICE"
+            android:textColor="#050611"
+            android:backgroundTint="#8FF7FF" />
+
+        <Button
+            android:id="@+id/identifyChipButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:minHeight="52dp"
+            android:text="IDENTIFY CHIP"
+            android:textColor="#050611"
+            android:backgroundTint="#FF4FD8" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -38,18 +78,40 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:text="IDENTIFY RESULTS"
+                android:textColor="#F0B35A"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/identifyResultText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
                 android:fontFamily="monospace"
-                android:lineSpacingExtra="6dp"
-                android:text="In-app flash is not shipped yet.\n\nBig-brother loop we are building toward:\n  1. DETECT  — Connect finds your USB board\n  2. FLASH   — install a compatible passive firmware\n  3. DRIVE   — Live Field runs the survey session\n\nFor now, flash from a desktop browser with the repo ESP Web Tools / firmware release assets. This page will list compatible firmwares once the in-app path exists.\n\nNo fake flash UI. No pretend progress bars."
+                android:lineSpacingExtra="5dp"
+                android:text="Waiting for Identify…\n\nChip family comes from ROM probe (SYNC + GET_SECURITY_INFO / magic).\nUSB VID/PID alone cannot tell WT013261-S5 vs WT32C3-S5 vs WT018684-S5."
                 android:textColor="#D6D9FF"
-                android:textSize="13sp" />
+                android:textSize="12sp" />
         </LinearLayout>
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
-            android:text="Passive safety scope unchanged — survey only, no offensive features."
+            android:background="#10142B"
+            android:padding="12dp"
+            android:fontFamily="monospace"
+            android:lineSpacingExtra="4dp"
+            android:text="Flow: DETECT (this page) → FLASH (PR2) → DRIVE (Live Field).\nFull in-app flash is not in this PR. Desktop ESP Web Tools still works.\n\nOTG: use a data-capable USB-C OTG adapter; charge-only cables fail silently.\nCH343 boards may need a moment after plug before Identify."
+            android:textColor="#D6D9FF"
+            android:textSize="11sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text="Passive safety scope unchanged — identify/flash tooling only, no offensive RF features."
             android:textColor="#5D958D"
             android:textSize="11sp"
             android:fontFamily="monospace" />
