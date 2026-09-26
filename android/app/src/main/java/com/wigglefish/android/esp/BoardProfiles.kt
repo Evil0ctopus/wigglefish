@@ -56,4 +56,11 @@ object BoardProfiles {
         }
         return candidates.firstOrNull()
     }
+
+    /** Chip families that may receive an in-app flash for a given profile stub. */
+    fun flashEligibleFamilies(profileId: String?): List<String> {
+        val profile = all.firstOrNull { it.id.equals(profileId, ignoreCase = true) } ?: return emptyList()
+        return profile.expectedChipFamilies
+    }
 }
+

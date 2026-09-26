@@ -28,7 +28,9 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import java.io.File
 import com.wigglefish.android.esp.BoardProfiles
 import com.wigglefish.android.esp.EspIdentifyResult
+import com.wigglefish.android.esp.EspRomFlasher
 import com.wigglefish.android.esp.EspRomIdentifier
+import com.wigglefish.android.esp.FirmwareCatalog
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -53,7 +55,9 @@ class MainActivity : AppCompatActivity(), SurveyHost {
     private var decodeRunning = false
     @Volatile private var pendingFlashOpen = false
     @Volatile private var pendingIdentify = false
+    @Volatile private var pendingFlashImageId: String? = null
     @Volatile private var identifyRunning = false
+    @Volatile private var flashRunning = false
 
     private data class DecodeJob(val label: String)
 
@@ -72,6 +76,11 @@ class MainActivity : AppCompatActivity(), SurveyHost {
                         pendingIdentify = false
                         openForIdentify(device)
                     }
+                    pendingFlashImageId != null -> {
+                        val imageId = pendingFlashImageId
+                        pendingFlashImageId = null
+                        openForFlash(device, imageId!!)
+                    }
                     pendingFlashOpen -> {
                         pendingFlashOpen = false
                         connectForFlash(device)
@@ -81,8 +90,10 @@ class MainActivity : AppCompatActivity(), SurveyHost {
             } else {
                 pendingIdentify = false
                 pendingFlashOpen = false
+                pendingFlashImageId = null
                 session.setStatus("USB permission was denied")
                 session.setIdentifyBusy(false, "USB permission was denied")
+                session.setFlashBusy(false, "USB permission was denied")
             }
         }
     }
@@ -195,17 +206,24 @@ class MainActivity : AppCompatActivity(), SurveyHost {
     }
 
     override fun requestEspIdentify() {
-        if (identifyRunning) return
-        requestUsbDevice(forFlash = true, thenIdentify = true)
+        if (identifyRunning || flashRunning) return
+        requestUsbDevice(forFlash = true, thenIdentify = true, flashImageId = null)
     }
 
-    private fun requestUsbDevice(forFlash: Boolean, thenIdentify: Boolean) {
+    override fun requestEspFlash(imageId: String) {
+        if (identifyRunning || flashRunning) return
+        requestUsbDevice(forFlash = true, thenIdentify = false, flashImageId = imageId)
+    }
+
+    private fun requestUsbDevice(forFlash: Boolean, thenIdentify: Boolean, flashImageId: String? = null) {
         val device = serial.findDevice()
         if (device == null) {
             session.setDeviceText("USB DEVICE  NO USB DEVICE")
             val msg = "No USB-serial device. Connect CH343/ESP via USB-C OTG (data cable)."
             session.setStatus(msg)
-            if (thenIdentify || forFlash) {
+            if (thenIdentify) session.setIdentifyBusy(false, msg)
+            if (flashImageId != null) session.setFlashBusy(false, msg)
+            if (forFlash && flashImageId == null && !thenIdentify) {
                 session.setIdentifyBusy(false, msg)
             }
             return
@@ -213,13 +231,15 @@ class MainActivity : AppCompatActivity(), SurveyHost {
         if (usbManager.hasPermission(device)) {
             when {
                 thenIdentify -> openForIdentify(device)
+                flashImageId != null -> openForFlash(device, flashImageId)
                 forFlash -> connectForFlash(device)
                 else -> connect(device)
             }
             return
         }
-        pendingFlashOpen = forFlash && !thenIdentify
+        pendingFlashOpen = forFlash && !thenIdentify && flashImageId == null
         pendingIdentify = thenIdentify
+        pendingFlashImageId = flashImageId
         val permission = PendingIntent.getBroadcast(
             this,
             0,
@@ -228,7 +248,9 @@ class MainActivity : AppCompatActivity(), SurveyHost {
         )
         usbManager.requestPermission(device, permission)
         session.setStatus("Waiting for USB permission...")
-        if (thenIdentify || forFlash) {
+        if (thenIdentify) session.setIdentifyBusy(false, "Waiting for USB permission...")
+        if (flashImageId != null) session.setFlashBusy(false, "Waiting for USB permission...")
+        if (forFlash && flashImageId == null && !thenIdentify) {
             session.setIdentifyBusy(false, "Waiting for USB permission...")
         }
     }
@@ -319,11 +341,125 @@ class MainActivity : AppCompatActivity(), SurveyHost {
         }.start()
     }
 
+
+    private fun openForFlash(device: android.hardware.usb.UsbDevice, imageId: String) {
+        if (flashRunning || identifyRunning) return
+        flashRunning = true
+        session.setFlashBusy(true, "Preparing flash…", "Loading image $imageId")
+        Thread {
+            var restoreSurvey = false
+            try {
+                val catalog = FirmwareCatalog.load(this)
+                val image = catalog.firstOrNull { it.id == imageId }
+                    ?: throw IllegalStateException("Unknown firmware image id: $imageId")
+                if (!image.available) {
+                    throw IllegalStateException("Image unavailable: ${image.notes}")
+                }
+                val identifyState = session.identify.value
+                val chip = identifyState?.chipFamily
+                if (chip != null && !image.matchesChip(chip)) {
+                    throw IllegalStateException(
+                        "Image ${image.id} is for ${image.chipFamilies}, but Identify reported $chip",
+                    )
+                }
+
+                if (serial.isOpen() && serial.currentDevice()?.deviceId == device.deviceId) {
+                    serial.pauseLineReader()
+                    restoreSurvey = session.isUsbCollectionEnabled()
+                } else {
+                    if (!serial.connectBinary(device)) {
+                        uiHandler.post {
+                            flashRunning = false
+                            session.setFlashResult(
+                                status = "Flash failed",
+                                message = "Could not open USB serial for flash",
+                                logText = "connectBinary failed",
+                                success = false,
+                            )
+                        }
+                        return@Thread
+                    }
+                    restoreSurvey = session.isUsbCollectionEnabled()
+                }
+
+                uiHandler.post {
+                    session.setConnectedUsb(deviceLabel(device), connected = true)
+                }
+
+                val parts = FirmwareCatalog.loadParts(this, image)
+                // C5/C3/C6 ROM need the encrypted-flash word on FLASH_BEGIN.
+                val encryptedWord = when {
+                    chip?.contains("ESP32-C", ignoreCase = true) == true -> true
+                    chip?.contains("ESP32-S3", ignoreCase = true) == true -> true
+                    chip?.contains("ESP32-H", ignoreCase = true) == true -> true
+                    chip?.equals("ESP32", ignoreCase = true) == true -> true
+                    chip == null -> true // default safe for modern ROM
+                    else -> true
+                }
+
+                val flasher = EspRomFlasher(serial)
+                val result = flasher.flash(
+                    parts = parts,
+                    flashSizeBytes = image.flashSizeBytes,
+                    supportsEncryptedFlashWord = encryptedWord,
+                    preferHighBaud = true,
+                ) { progress ->
+                    uiHandler.post {
+                        session.setFlashProgress(
+                            stageLabel = progress.stage.name,
+                            percent = progress.percent,
+                            message = progress.message,
+                            status = "Flashing ${image.label}",
+                        )
+                    }
+                }
+
+                uiHandler.post {
+                    flashRunning = false
+                    session.setFlashResult(
+                        status = if (result.success) "Flash OK" else "Flash failed",
+                        message = result.message,
+                        logText = buildString {
+                            appendLine(result.message)
+                            appendLine()
+                            append(result.detail)
+                            if (result.success) {
+                                appendLine()
+                                appendLine()
+                                append("Next: open Live Field or Connect to resume survey JSON.")
+                            }
+                        }.trim(),
+                        success = result.success,
+                    )
+                    session.setStatus(if (result.success) "Flash OK — try Live Field / Connect" else "Flash failed — see Flash page")
+                    if (result.success) logUsbEvent("flashed")
+                    if (restoreSurvey && session.isUsbCollectionEnabled()) {
+                        serial.disconnect()
+                        connect(device)
+                    }
+                }
+            } catch (error: Exception) {
+                uiHandler.post {
+                    flashRunning = false
+                    session.setFlashResult(
+                        status = "Flash failed",
+                        message = error.message ?: "Flash failed",
+                        logText = error.message ?: "Flash failed",
+                        success = false,
+                    )
+                    session.setStatus("Flash failed — see Flash page")
+                }
+            }
+        }.start()
+    }
+
     private fun publishIdentifyFailure(message: String) {
         identifyRunning = false
         session.setIdentifyResult(
             status = message,
             resultText = "Identify failed.\n\n$message\n\nTips: data-capable OTG, try again, hold BOOT if auto-reset fails on this bridge.",
+            chipFamily = null,
+            profileId = null,
         )
         session.setStatus(message)
     }
@@ -334,6 +470,8 @@ class MainActivity : AppCompatActivity(), SurveyHost {
             session.setIdentifyResult(
                 status = "Identify failed",
                 resultText = formatIdentify(result),
+                chipFamily = null,
+                profileId = null,
             )
             session.setStatus("Identify failed — see Flash page")
             return
@@ -342,8 +480,10 @@ class MainActivity : AppCompatActivity(), SurveyHost {
         session.setIdentifyResult(
             status = "Identified $family",
             resultText = formatIdentify(result),
+            chipFamily = result.chipFamily,
+            profileId = result.matchedProfileId,
         )
-        session.setStatus("Identified $family")
+        session.setStatus("Identified $family — select image & Flash")
         logUsbEvent("identified")
     }
 
@@ -372,7 +512,7 @@ class MainActivity : AppCompatActivity(), SurveyHost {
             append(result.detail.ifBlank { "(empty)" })
             appendLine()
             appendLine()
-            append("Note: full flash write is PR2. Identify uses Kotlin ROM sync + security-info/magic (not Python esptool; NDK esp-serial-flasher deferred).")
+            append("Note: flash write uses the same Kotlin ROM stack (SPI_ATTACH / FLASH_BEGIN+DATA / MD5 / reset). Not Python esptool.")
         }.trim()
     }
 
