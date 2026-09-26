@@ -19,15 +19,21 @@ class ExportsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val sessionText = view.findViewById<TextView>(R.id.sessionText)
         val sourceText = view.findViewById<TextView>(R.id.sourceText)
+        val coverageText = view.findViewById<TextView>(R.id.coverageText)
         val host = requireActivity() as SurveyHost
 
         view.findViewById<Button>(R.id.exportButton).setOnClickListener { host.shareSessionJson() }
         view.findViewById<Button>(R.id.csvButton).setOnClickListener { host.shareSessionCsv() }
+        view.findViewById<Button>(R.id.wardriveGoButton).setOnClickListener { host.shareWardriveGoCsv() }
+        view.findViewById<Button>(R.id.wigleButton).setOnClickListener { host.shareWigleCsv() }
+        view.findViewById<Button>(R.id.geoJsonButton).setOnClickListener { host.shareGeoJson() }
         view.findViewById<Button>(R.id.clearButton).setOnClickListener { host.clearSession() }
+        view.findViewById<Button>(R.id.stopAllButton).setOnClickListener { host.stopAllCollection() }
 
         session.ui.observe(viewLifecycleOwner) { state ->
             sessionText.text = state.session
             sourceText.text = state.source
+            coverageText.text = state.coverageHint
         }
     }
 }

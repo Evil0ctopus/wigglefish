@@ -9,8 +9,8 @@ The UI is a bottom-nav shell (AndroidX Navigation + Fragments). Five destination
 1. **Home** â€” status summary, strongest signal, Wi-Fi / BLE / GPS counters, and quick jumps to the other pages.
 2. **Connect / Device** â€” USB connect, phone + USB collection toggles, permission/device/GPS/source status.
 3. **Flash / Firmware** â€” **Identify chip** + **in-app flash write** over USB OTG (Kotlin ROM protocol, not Python esptool).
-4. **Live Field** â€” spectrum, ALL/Wi-Fi/BLE filters, matrix decode stream, radar, categorized devices, live observation list.
-5. **Exports / Sessions** â€” JSON + CSV share, clear session, session counters / source tallies.
+4. **Survey / Wardrive** (nav label: Survey) — fused Wi-Fi + BLE + GPS session: spectrum, filters, radar, coverage quality, live observation list with hit/peak RSSI + vendor OUI.
+5. **Exports / Sessions** — JSON, CSV, Wardrive Go CSV, WiGLE CSV, GeoJSON; Stop All; clear session; session/coverage counters.
 
 Shared observational state lives in an activity-scoped `SurveySessionViewModel`. USB serial, phone Wi-Fi/BLE/GPS, and file logging stay owned by `MainActivity`, which implements `SurveyHost` for fragment actions.
 
@@ -30,7 +30,7 @@ Shared observational state lives in an activity-scoped `SurveySessionViewModel`.
    - **ESP32-C5:** packaged **Wigglefish passive scanner v0.1.0** from app assets (`firmware/esp32c5/â€¦`, sourced from draft GitHub release `firmware-v0.1.0`).
    - **ESP32-C3 / classic ESP32:** honest stubs â€” Identify works; no packaged image yet.
 7. Tap **Flash selected image**. Progress shows stages: `SYNC` â†’ `ATTACH` â†’ `ERASE` â†’ `WRITE` â†’ `VERIFY` â†’ `RESET`.
-8. After flash, the app best-effort hard-resets back to **run mode**. Open **Live Field** or **Connect** to resume survey JSON.
+8. After flash, the app best-effort hard-resets back to **run mode**. Open **Survey / Wardrive** or **Connect** to resume survey JSON.
 
 **Same VID/PID is expected** across those Wireless-Tag / CH343 boards â€” Identify must use the chip probe, not USB IDs alone. Profile stubs live in `BoardProfiles.kt` and `assets/board_profiles.json`. Flash eligibility is wired by **chip family** (catalog `firmware_catalog.json`).
 
@@ -68,6 +68,28 @@ C5 flash map (matches `firmware/web-flash` / ESP-IDF):
 
 - Phone must supply OTG host power; some phones need a powered hub for hungry boards.
 - After Identify-only the chip may remain in download mode â€” Flash performs a run-mode reset; otherwise use **Connect** (or replug) before expecting survey JSON again.
+
+
+
+## Passive wardrive (v0.3+)
+
+The Survey page is a **fused session**: phone/ESP Wi-Fi observations, BLE ads, and GPS fixes share one timeline. Each BSSID/MAC is deduped with `firstSeen` / `lastSeen`, `hitCount`, `peakRssi` / `avgRssi`, security (when known), vendor OUI (lightweight table), and last GPS.
+
+### Export pack
+
+| Button | Format |
+|--------|--------|
+| EXPORT JSON | Session pack: summary + observations + GPS timeline |
+| EXPORT CSV | Enriched generic CSV (MAC/SSID/AUTH/… + GPS + timing) |
+| EXPORT WARDRIVE GO CSV | Wardrive Go–compatible fields + GPS/timing |
+| EXPORT WIGLE CSV | `WigleWifi-1.6` pre-header + WIFI/BLE rows |
+| EXPORT GEOJSON | FeatureCollection of observations (and GPS fixes) with coordinates |
+
+**Scope:** metadata-only passive survey. No beacon flood, BLE spam, EAPOL/PMKID capture, deauth, injection, evil portal, or PCAP-for-cracking.
+
+### Stop All
+
+Home / Connect / Survey / Exports expose **STOP ALL COLLECTION** — turns off phone Wi-Fi/BLE/GPS listeners and disconnects USB survey in one tap (Flash/Identify can still reconnect USB separately).
 
 ## Behavior
 

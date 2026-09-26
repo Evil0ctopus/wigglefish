@@ -29,6 +29,7 @@ class ConnectFragment : Fragment() {
         connectButton.setOnClickListener { host.requestUsbConnection() }
         phoneCollectionButton.setOnClickListener { host.togglePhoneCollection() }
         usbCollectionButton.setOnClickListener { host.toggleUsbCollection() }
+        view.findViewById<Button>(R.id.stopAllButton).setOnClickListener { host.stopAllCollection() }
 
         session.ui.observe(viewLifecycleOwner) { state ->
             statusText.text = state.status

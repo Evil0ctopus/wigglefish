@@ -23,7 +23,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="5dp"
-            android:text="REAL SIGNALS // PASSIVE RECON // ESP32-C5"
+            android:text="REAL SIGNALS // PASSIVE WARDRIVE // ESP32-C5"
             android:textColor="#8FF7FF"
             android:textSize="14sp" />
 
@@ -81,8 +81,18 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="SESSION  00 passes   0 records   waiting"
+            android:text="SESSION  00:00  Wi-Fi 0  BLE 0  GPS pts 0  hits 0  quality idle"
             android:textColor="#5D958D"
+            android:textSize="11sp"
+            android:fontFamily="monospace" />
+
+        <TextView
+            android:id="@+id/coverageText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="COVERAGE  waiting for GPS + observations"
+            android:textColor="#F0B35A"
             android:textSize="11sp"
             android:fontFamily="monospace" />
 
@@ -166,7 +176,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:minHeight="52dp"
-            android:text="LIVE FIELD"
+            android:text="SURVEY / WARDRIVE"
             android:textColor="#050611"
             android:backgroundTint="#8FF7FF" />
 
@@ -179,6 +189,16 @@
             android:text="EXPORTS / SESSIONS"
             android:textColor="#050611"
             android:backgroundTint="#F0B35A" />
+
+        <Button
+            android:id="@+id/stopAllButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:minHeight="52dp"
+            android:text="STOP ALL COLLECTION"
+            android:textColor="#F4F7FF"
+            android:backgroundTint="#5A1A2E" />
 
         <Button
             android:id="@+id/openFlashButton"

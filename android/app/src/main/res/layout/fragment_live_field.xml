@@ -13,10 +13,48 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="LIVE FIELD // SCANNER"
+            android:text="SURVEY / WARDRIVE"
             android:textColor="#FF4FD8"
             android:textSize="23sp"
             android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="PASSIVE WARDRIVE SESSION // Wi-Fi + BLE + GPS"
+            android:textColor="#8FF7FF"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/sessionText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="SESSION  00:00  Wi-Fi 0  BLE 0  GPS pts 0  hits 0  quality idle"
+            android:textColor="#5D958D"
+            android:textSize="11sp"
+            android:fontFamily="monospace" />
+
+        <TextView
+            android:id="@+id/coverageText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="COVERAGE  waiting for GPS + observations"
+            android:textColor="#F0B35A"
+            android:textSize="11sp"
+            android:fontFamily="monospace" />
+
+        <TextView
+            android:id="@+id/locationText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="GPS LOCK  phone location optional"
+            android:textColor="#8FF7FF"
+            android:textSize="11sp"
+            android:fontFamily="monospace" />
 
         <TextView
             android:id="@+id/strongestText"
@@ -67,7 +105,7 @@
                 android:layout_weight="1"
                 android:background="#10142B"
                 android:padding="14dp"
-                android:text="0&#10;GPS SAT"
+                android:text="0&#10;GPS PTS"
                 android:textColor="#F0B35A"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -152,6 +190,16 @@
             android:textColor="#8FF7FF"
             android:textSize="11sp"
             android:fontFamily="monospace" />
+
+        <Button
+            android:id="@+id/stopAllButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:minHeight="48dp"
+            android:text="STOP ALL COLLECTION"
+            android:textColor="#F4F7FF"
+            android:backgroundTint="#5A1A2E" />
 
         <TextView
             android:layout_width="match_parent"

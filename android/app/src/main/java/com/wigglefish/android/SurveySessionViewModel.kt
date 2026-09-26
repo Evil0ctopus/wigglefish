@@ -7,15 +7,18 @@ import java.util.Locale
 import org.json.JSONObject
 
 data class SurveyUiState(
-    val status: String = "REAL SIGNALS // PASSIVE RECON // ESP32-C5",
+    val status: String = "REAL SIGNALS // PASSIVE WARDRIVE // ESP32-C5",
     val wifiCount: Int = 0,
     val bleCount: Int = 0,
     val gpsSatCount: Int = 0,
+    val gpsFixCount: Int = 0,
+    val hasGpsFix: Boolean = false,
     val strongest: String = "SIGNAL LOCK  --   strongest observation: waiting",
     val location: String = "GPS LOCK  phone location optional",
     val source: String = "ESP32_SERIAL 0   PHONE 0   LEGACY_SERIAL 0",
     val device: String = "USB DEVICE  NO USB DEVICE",
-    val session: String = "SESSION  00 passes   0 records   waiting",
+    val session: String = "SESSION  00:00  Wi-Fi 0  BLE 0  GPS pts 0  hits 0  quality idle",
+    val coverageHint: String = "COVERAGE  waiting for GPS + observations",
     val spectrum: String = "No channel activity yet",
     val viewLabel: String = "VIEW  ALL   /   0 live signals",
     val category: String = "CAMERAS  00     FLIPPER-LIKE  00     AIRTAG-LIKE  00\nOTHER WIFI  00     OTHER BLE  00     GPS SAT  00",
@@ -50,15 +53,16 @@ data class FlashUiState(
 )
 
 /**
- * Activity-scoped session state shared by Home / Connect / Live Field / Exports fragments.
+ * Activity-scoped fused wardrive session: Wi-Fi + BLE + GPS on one timeline.
+ * Shared by Home / Connect / Survey / Exports fragments.
  */
 class SurveySessionViewModel : ViewModel() {
-    private val wifiRecords = linkedMapOf<String, String>()
-    private val bleRecords = linkedMapOf<String, String>()
+    private val observations = linkedMapOf<String, ObservationRecord>()
     private val wifiChannels = linkedMapOf<Int, Int>()
-    private val rawRecords = linkedMapOf<String, JSONObject>()
+    private val gpsFixes = mutableListOf<GpsFix>()
     private val sourceCounts = linkedMapOf<String, Int>()
 
+    private var sessionStartedAt = System.currentTimeMillis()
     private var scanPasses = 0
     private var lastObservationAt = 0L
     private var selectedView = "ALL"
@@ -66,11 +70,12 @@ class SurveySessionViewModel : ViewModel() {
     private var phoneCollectionEnabled = true
     private var usbCollectionEnabled = true
     private var connectedUsbLabel = ""
-    private var statusText = "REAL SIGNALS // PASSIVE RECON // ESP32-C5"
+    private var statusText = "REAL SIGNALS // PASSIVE WARDRIVE // ESP32-C5"
     private var locationText = "GPS LOCK  phone location optional"
     private var deviceText = "USB DEVICE  NO USB DEVICE"
     private var connectButtonLabel = "CONNECT USB"
     private var decodeText = ""
+    private var currentGps: GpsFix? = null
 
     private val _ui = MutableLiveData(SurveyUiState())
     val ui: LiveData<SurveyUiState> = _ui
@@ -81,9 +86,35 @@ class SurveySessionViewModel : ViewModel() {
     private val _flash = MutableLiveData(FlashUiState())
     val flash: LiveData<FlashUiState> = _flash
 
-    fun snapshotRawRecords(): List<JSONObject> = rawRecords.values.map { JSONObject(it.toString()) }
+    fun snapshotObservations(): List<ObservationRecord> = observations.values.toList()
 
-    fun recordCount(): Int = rawRecords.size
+    fun snapshotRawRecords(): List<JSONObject> = observations.values.map { it.toJson() }
+
+    fun snapshotGpsFixes(): List<GpsFix> = gpsFixes.toList()
+
+    fun recordCount(): Int = observations.size
+
+    fun currentGpsFix(): GpsFix? = currentGps
+
+    fun sessionSummary(): SessionSummary {
+        val now = System.currentTimeMillis()
+        val duration = (now - sessionStartedAt).coerceAtLeast(0L)
+        val uniqueWifi = observations.values.count { it.type == "wifi" }
+        val uniqueBle = observations.values.count { it.type == "ble" }
+        val hits = observations.values.sumOf { it.hitCount }
+        val gpsCount = gpsFixes.size
+        val hasFix = currentGps != null
+        val quality = qualityLabel(duration, uniqueWifi, uniqueBle, gpsCount, hasFix)
+        return SessionSummary(
+            durationMs = duration,
+            uniqueWifi = uniqueWifi,
+            uniqueBle = uniqueBle,
+            gpsPointCount = gpsCount,
+            observationHits = hits,
+            qualityLabel = quality,
+            hasGpsFix = hasFix,
+        )
+    }
 
     fun isPhoneCollectionEnabled(): Boolean = phoneCollectionEnabled
 
@@ -108,6 +139,23 @@ class SurveySessionViewModel : ViewModel() {
 
     fun setSatelliteCount(count: Int) {
         satelliteCount = count
+        publish()
+    }
+
+    fun updateGpsFix(fix: GpsFix) {
+        currentGps = fix
+        // Deduplicate near-identical consecutive fixes (time + position).
+        val last = gpsFixes.lastOrNull()
+        val shouldAppend = last == null ||
+            fix.timestampMs - last.timestampMs >= 2000L ||
+            distanceRoughMeters(last, fix) >= 2.0
+        if (shouldAppend) {
+            gpsFixes += fix
+            // Cap timeline memory for long drives.
+            if (gpsFixes.size > 5000) {
+                gpsFixes.removeAt(0)
+            }
+        }
         publish()
     }
 
@@ -161,20 +209,48 @@ class SurveySessionViewModel : ViewModel() {
 
     fun ingestWifi(message: JSONObject): String? {
         val ssid = message.optString("ssid").ifEmpty { "<hidden>" }
-        val bssid = message.optString("bssid")
-        val key = bssid.ifEmpty { "$ssid:${message.optInt("channel")}" }
+        val bssid = message.optString("bssid").ifEmpty { message.optString("mac") }
         val channel = message.optInt("channel")
-        wifiChannels[channel] = (wifiChannels[channel] ?: 0) + 1
-        rawRecords[key] = JSONObject(message.toString())
-        lastObservationAt = System.currentTimeMillis()
-        val formatted = "WIFI   %4d dBm   ch %-2d   %-24s  %s".format(
-            message.optInt("rssi"),
-            message.optInt("channel"),
-            ssid,
-            message.optString("security", "OPEN"),
-        )
-        val isNew = !wifiRecords.containsKey(key)
-        wifiRecords[key] = formatted
+        val key = bssid.ifEmpty { "wifi:$ssid:$channel" }
+        val security = message.optString("security").ifEmpty {
+            message.optString("encryption").ifEmpty { message.optString("capabilities") }
+        }
+        val frequency = message.optInt("frequency", 0)
+        val rssi = message.optInt("rssi")
+        val source = message.optString("source", "")
+        val now = System.currentTimeMillis()
+        val gps = currentGps
+        if (channel > 0) {
+            wifiChannels[channel] = (wifiChannels[channel] ?: 0) + 1
+        }
+        lastObservationAt = now
+        val existing = observations[key]
+        val isNew = existing == null
+        if (existing == null) {
+            observations[key] = ObservationRecord.newWifi(
+                key = key,
+                mac = bssid,
+                ssid = ssid,
+                channel = channel,
+                frequencyMhz = frequency,
+                security = security,
+                rssi = rssi,
+                source = source,
+                nowMs = now,
+                gps = gps,
+            )
+        } else {
+            existing.update(
+                rssi = rssi,
+                ssidOrName = ssid,
+                channel = channel,
+                frequencyMhz = frequency,
+                security = security,
+                source = source,
+                nowMs = now,
+                gps = gps,
+            )
+        }
         publish()
         return if (isNew && ssid != "<hidden>") ssid else null
     }
@@ -182,18 +258,39 @@ class SurveySessionViewModel : ViewModel() {
     fun ingestBle(message: JSONObject): String? {
         val address = message.optString("address").ifEmpty { message.optString("mac") }
         val name = message.optString("name").ifEmpty { address }
-        val isNew = !bleRecords.containsKey(address)
-        rawRecords[address] = JSONObject(message.toString())
-        lastObservationAt = System.currentTimeMillis()
-        bleRecords[address] = "BLE    %4d dBm   %-24s  %s".format(
-            message.optInt("rssi"),
-            name,
-            address,
-        )
+        val key = address.ifEmpty { "ble:$name" }
+        val rssi = message.optInt("rssi")
+        val source = message.optString("source", "")
+        val now = System.currentTimeMillis()
+        val gps = currentGps
+        lastObservationAt = now
+        val existing = observations[key]
+        val isNew = existing == null
+        if (existing == null) {
+            observations[key] = ObservationRecord.newBle(
+                key = key,
+                mac = address,
+                name = name,
+                rssi = rssi,
+                source = source,
+                nowMs = now,
+                gps = gps,
+            )
+        } else {
+            existing.update(
+                rssi = rssi,
+                ssidOrName = name,
+                channel = 0,
+                frequencyMhz = 0,
+                security = "",
+                source = source,
+                nowMs = now,
+                gps = gps,
+            )
+        }
         publish()
         return if (isNew) name.ifEmpty { address } else null
     }
-
 
     fun setIdentifyBusy(busy: Boolean, status: String? = null) {
         val current = _identify.value ?: IdentifyUiState()
@@ -256,53 +353,57 @@ class SurveySessionViewModel : ViewModel() {
     }
 
     fun clearObservations() {
-        wifiRecords.clear()
-        bleRecords.clear()
+        observations.clear()
         wifiChannels.clear()
-        rawRecords.clear()
+        gpsFixes.clear()
         sourceCounts.clear()
         scanPasses = 0
         lastObservationAt = 0L
         decodeText = ""
+        sessionStartedAt = System.currentTimeMillis()
         publish()
     }
 
     private fun publish() {
-        val lastSeen = if (lastObservationAt == 0L) "waiting" else "live"
+        val summary = sessionSummary()
         val spectrum = if (wifiChannels.isEmpty()) {
             "No channel activity yet"
         } else {
             wifiChannels.entries.sortedBy { it.key }.joinToString("\n") { (channel, hits) ->
                 val bar = "#".repeat(hits.coerceAtMost(12))
-                "CH %-3d %-12s %d AP".format(channel, bar, hits)
+                "CH %-3d %-12s %d hits".format(channel, bar, hits)
             }
         }
         val records = when (selectedView) {
-            "WIFI" -> wifiRecords.values
-            "BLE" -> bleRecords.values
-            else -> wifiRecords.values + bleRecords.values
-        }.sorted()
+            "WIFI" -> observations.values.filter { it.type == "wifi" }
+            "BLE" -> observations.values.filter { it.type == "ble" }
+            else -> observations.values.toList()
+        }.sortedByDescending { it.lastRssi }
+        val coverage = coverageHint(summary)
         _ui.value = SurveyUiState(
             status = statusText,
-            wifiCount = wifiRecords.size,
-            bleCount = bleRecords.size,
+            wifiCount = summary.uniqueWifi,
+            bleCount = summary.uniqueBle,
             gpsSatCount = satelliteCount,
+            gpsFixCount = summary.gpsPointCount,
+            hasGpsFix = summary.hasGpsFix,
             strongest = strongestSignalSummary(),
             location = locationText,
             source = sourceCounts.entries.joinToString("   ") { "${it.key} ${it.value}" }
                 .ifEmpty { "ESP32_SERIAL 0   PHONE 0   LEGACY_SERIAL 0" },
             device = deviceText,
-            session = "SESSION  %02d passes   %d records   %s".format(scanPasses, rawRecords.size, lastSeen),
+            session = summary.formatLine() + if (scanPasses > 0) "  passes=$scanPasses" else "",
+            coverageHint = coverage,
             spectrum = spectrum,
-            viewLabel = "VIEW  $selectedView   /   ${rawRecords.size} live signals",
+            viewLabel = "VIEW  $selectedView   /   ${observations.size} unique  (${summary.observationHits} hits)",
             category = categorySummary(),
             results = if (records.isEmpty()) {
                 "Waiting for passive observations..."
             } else {
-                records.joinToString("\n")
+                records.joinToString("\n") { it.displayLine() }
             },
             decode = decodeText,
-            signalCount = rawRecords.size,
+            signalCount = observations.size,
             phoneCollectionOn = phoneCollectionEnabled,
             usbCollectionOn = usbCollectionEnabled,
             connectButtonLabel = connectButtonLabel,
@@ -311,13 +412,9 @@ class SurveySessionViewModel : ViewModel() {
     }
 
     private fun strongestSignalSummary(): String {
-        val strongest = rawRecords.values.maxByOrNull { it.optInt("rssi", -127) }
+        val strongest = observations.values.maxByOrNull { it.lastRssi }
             ?: return "SIGNAL LOCK  --   strongest observation: waiting"
-        val type = strongest.optString("type").uppercase(Locale.US)
-        val name = strongest.optString("ssid").ifEmpty {
-            strongest.optString("name").ifEmpty { strongest.optString("mac") }
-        }
-        return "SIGNAL LOCK  $type   ${strongest.optInt("rssi")} dBm   $name"
+        return "SIGNAL LOCK  ${strongest.type.uppercase(Locale.US)}   ${strongest.lastRssi} dBm   ${strongest.ssidOrName}"
     }
 
     private fun categorySummary(): String {
@@ -326,19 +423,57 @@ class SurveySessionViewModel : ViewModel() {
         var airtags = 0
         var otherWifi = 0
         var otherBle = 0
-        rawRecords.values.forEach { record ->
-            val text = record.toString().lowercase(Locale.US)
-            val type = record.optString("type")
+        observations.values.forEach { record ->
+            val text = "${record.ssidOrName} ${record.vendor} ${record.mac}".lowercase(Locale.US)
             when {
-                text.contains("airtag") || text.contains("find my") || text.contains("0x004c") -> airtags++
+                text.contains("airtag") || text.contains("find my") -> airtags++
                 text.contains("flipper") || text.contains("badusb") -> flipper++
                 text.contains("camera") || text.contains("cam") || text.contains("hikvision") || text.contains("ring") -> cameras++
-                type == "wifi" -> otherWifi++
+                record.type == "wifi" -> otherWifi++
                 else -> otherBle++
             }
         }
         return "CAMERAS  %02d     FLIPPER-LIKE  %02d     AIRTAG-LIKE  %02d\nOTHER WIFI  %02d     OTHER BLE  %02d     GPS SAT  %02d".format(
             cameras, flipper, airtags, otherWifi, otherBle, satelliteCount,
         )
+    }
+
+    private fun qualityLabel(
+        durationMs: Long,
+        uniqueWifi: Int,
+        uniqueBle: Int,
+        gpsCount: Int,
+        hasFix: Boolean,
+    ): String {
+        if (uniqueWifi + uniqueBle == 0) return "idle"
+        val minutes = (durationMs / 60000.0).coerceAtLeast(0.1)
+        val uniquesPerMin = (uniqueWifi + uniqueBle) / minutes
+        val gpsRate = gpsCount / minutes
+        return when {
+            hasFix && uniquesPerMin >= 8 && gpsRate >= 4 -> "dense"
+            hasFix && uniquesPerMin >= 3 && gpsRate >= 1 -> "good"
+            hasFix || uniquesPerMin >= 1 -> "fair"
+            else -> "sparse"
+        }
+    }
+
+    private fun coverageHint(summary: SessionSummary): String {
+        val gpsBit = if (summary.hasGpsFix) {
+            "GPS fix OK (${summary.gpsPointCount} pts)"
+        } else {
+            "no GPS fix yet — exports will lack coordinates"
+        }
+        return "COVERAGE  ${summary.qualityLabel.uppercase(Locale.US)}  |  $gpsBit  |  ${summary.uniqueWifi} AP / ${summary.uniqueBle} BLE"
+    }
+
+    private fun distanceRoughMeters(a: GpsFix, b: GpsFix): Double {
+        val latMid = Math.toRadians((a.latitude + b.latitude) / 2.0)
+        val dLat = Math.toRadians(b.latitude - a.latitude)
+        val dLon = Math.toRadians(b.longitude - a.longitude)
+        val metersPerLat = 111_320.0
+        val metersPerLon = 111_320.0 * Math.cos(latMid)
+        val dy = dLat * metersPerLat
+        val dx = dLon * metersPerLon
+        return Math.sqrt(dx * dx + dy * dy)
     }
 }
