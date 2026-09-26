@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ic_launcher_background">#050611</color>
+    <color name="wf_cyan">#8FF7FF</color>
+    <color name="wf_pink">#FF4FD8</color>
+    <color name="wf_amber">#F0B35A</color>
+    <color name="wf_panel">#0C1026</color>
+</resources>
