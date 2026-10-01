@@ -1,0 +1,59 @@
+{
+  "3": {
+    "class_type": "KSampler",
+    "inputs": {
+      "seed": 72381041,
+      "steps": 26,
+      "cfg": 6.0,
+      "sampler_name": "dpmpp_2m_sde",
+      "scheduler": "karras",
+      "denoise": 1.0,
+      "model": ["4", 0],
+      "positive": ["6", 0],
+      "negative": ["7", 0],
+      "latent_image": ["5", 0]
+    }
+  },
+  "4": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "RealVisXL_V4.0.safetensors"
+    }
+  },
+  "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
+    }
+  },
+  "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "Full-body character design sheet, 3D animated feature character with premium collectible-figure craftsmanship, a single blue-ringed octopus creature shown from mantle crown to every tentacle tip, full animal centered and occupying about 72 percent of the square image with generous clean margin around all eight arms. Three-quarter front view, both eyes clearly visible on the same head, one rounded indigo-blue mantle, exactly eight separate curling tentacles emerging from one central beak, visible rows of suckers, naturally uneven arm poses with a few tips raised and others curled inward. The animal is one coherent body, not a pile of creatures. Beautiful mischievous expression with expressive cyan eyes, warm copper-bronze sucker details, rich 3D sculpting, glossy eyes and soft subsurface skin, natural blue-ring-octopus markings across mantle and arms: small thin vivid cobalt rings with dark outlines, scattered over warm ochre, rust, violet-blue camouflage. Dark charcoal studio backdrop with a restrained teal hexagonal halo and subtle circuit etching far behind the full silhouette. Cinematic softbox lighting, clean readable shape, polished 3D cartoon realism, crisp focus, no typography.",
+      "clip": ["4", 1]
+    }
+  },
+  "7": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "close-up portrait, cropped animal, cropped tentacles, cut off arm tips, face fills entire frame, fewer than eight arms, more than eight arms, duplicated arms, fused arms, second octopus, extra head, extra eyes, shell, turtle, crab, squid, fish, human anatomy, human nose, human lips, teeth, horror monster, hostile snarl, photoreal wildlife photo, flat vector art, text, title, wordmark, logo, watermark, poster layout",
+      "clip": ["4", 1]
+    }
+  },
+  "8": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": ["3", 0],
+      "vae": ["4", 2]
+    }
+  },
+  "9": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "Wigglefish_Octo3D_Fullbody",
+      "images": ["8", 0]
+    }
+  }
+}

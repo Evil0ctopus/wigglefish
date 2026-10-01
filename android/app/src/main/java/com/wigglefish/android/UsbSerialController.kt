@@ -88,6 +88,24 @@ class UsbSerialController(
         connection = null
     }
 
+    fun isConnected(): Boolean = running && port != null
+
+    fun send(text: String): Boolean {
+        val payload = (if (text.endsWith("\n")) text else "$text\n").toByteArray(Charsets.UTF_8)
+        return write(payload)
+    }
+
+    fun write(bytes: ByteArray): Boolean {
+        val activePort = port ?: return false
+        return try {
+            activePort.write(bytes, 1000)
+            true
+        } catch (error: Exception) {
+            onState("Serial write error: ${error.message}")
+            false
+        }
+    }
+
     private fun readLoop(serialPort: UsbSerialPort) {
         val buffer = ByteArray(512)
         val line = StringBuilder()

@@ -1,5 +1,5 @@
 idf_component_register(
     SRCS "main.c"
     INCLUDE_DIRS "."
-    REQUIRES bt esp_wifi esp_event esp_netif nvs_flash esp_driver_gpio
+    REQUIRES bt esp_wifi esp_event esp_netif nvs_flash esp_driver_gpio led_strip esp_http_server lwip
 )

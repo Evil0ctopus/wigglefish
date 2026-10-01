@@ -17,3 +17,6 @@ wigglefish = "wigglefish.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+norecursedirs = ["tools/comfyui"]

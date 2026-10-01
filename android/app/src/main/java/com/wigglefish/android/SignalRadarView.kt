@@ -4,60 +4,74 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.graphics.LinearGradient
+import android.graphics.RadialGradient
+import android.graphics.RectF
 import android.graphics.Shader
+import android.graphics.SweepGradient
 import android.util.AttributeSet
 import android.view.View
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.sin
 
+/**
+ * 3D Toy Diorama Signal Radar.
+ * Styled after the charming, glossy aesthetic of The Legend of Zelda: Link's Awakening (Switch).
+ */
 class SignalRadarView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
 ) : View(context, attrs) {
-    private val gridPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.rgb(25, 104, 106)
+
+    private val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+    }
+    private val ringPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        strokeWidth = 2f
+        strokeWidth = 3f
     }
     private val sweepPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.rgb(255, 79, 216)
-        strokeWidth = 3f
-        setShadowLayer(18f, 0f, 0f, Color.rgb(143, 247, 255))
-    }
-    private val blipPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.rgb(114, 230, 197)
         style = Paint.Style.FILL
-        setShadowLayer(12f, 0f, 0f, Color.rgb(255, 79, 216))
+    }
+    private val rimPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 6f
+    }
+    private val gemPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+    }
+    private val highlightPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+        color = Color.argb(220, 255, 255, 255)
     }
     private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.rgb(143, 247, 255)
         textSize = 12f
-        typeface = android.graphics.Typeface.MONOSPACE
+        typeface = android.graphics.Typeface.DEFAULT_BOLD
     }
-    private val pulsePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.rgb(240, 179, 90)
-        style = Paint.Style.STROKE
-        strokeWidth = 2f
-    }
-    private val glitchPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    private val barPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
     }
+
     private var signalCount = 0
-    private var sweep = 0f
-    private var pulse = 0f
-    private var glitch = 0
+    private var wifiCount = 0
+    private var bleCount = 0
+    private var riskCount = 0
+    private var targetLabel = "NO LOCK"
+    private var targetRssi: Int? = null
+    private var channelHeat: Map<Int, Int> = emptyMap()
+    private var sweepAngle = 0f
+    private var pulseRadius = 0f
 
     init {
-        setBackgroundColor(Color.rgb(7, 27, 32))
+        setBackgroundColor(Color.TRANSPARENT)
+        setLayerType(LAYER_TYPE_HARDWARE, null)
         post(object : Runnable {
             override fun run() {
-                sweep = (sweep + 2f) % 360f
-                pulse = (pulse + 0.035f) % 1f
-                glitch = (glitch + 1) % 24
+                sweepAngle = (sweepAngle + 3.0f) % 360f
+                pulseRadius = (pulseRadius + 0.025f) % 1.0f
                 invalidate()
-                postDelayed(this, 40L)
+                postDelayed(this, 30L)
             }
         })
     }
@@ -67,48 +81,192 @@ class SignalRadarView @JvmOverloads constructor(
         invalidate()
     }
 
+    fun setTelemetry(
+        wifiCount: Int,
+        bleCount: Int,
+        riskCount: Int,
+        targetLabel: String?,
+        targetRssi: Int?,
+        channelHeat: Map<Int, Int>,
+    ) {
+        this.wifiCount = wifiCount
+        this.bleCount = bleCount
+        this.riskCount = riskCount
+        this.signalCount = wifiCount + bleCount
+        this.targetLabel = targetLabel?.takeIf { it.isNotBlank() } ?: "NO LOCK"
+        this.targetRssi = targetRssi
+        this.channelHeat = channelHeat.toMap()
+        invalidate()
+    }
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        glitchPaint.color = Color.rgb(7, 10, 29)
-        canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), glitchPaint)
-        for (line in 0 until height step 9) {
-            glitchPaint.color = if ((line / 9 + glitch) % 7 == 0) Color.argb(55, 255, 79, 216) else Color.argb(28, 143, 247, 255)
-            canvas.drawRect(0f, line.toFloat(), width.toFloat(), line + 1f, glitchPaint)
+        val cx = width / 2f
+        val cy = height / 2f
+        val radius = min(width, height) * 0.42f
+
+        // 1. 3D Bevel Shadow behind radar dish
+        bgPaint.color = Color.parseColor("#0B0E1A")
+        canvas.drawCircle(cx, cy + 6f, radius, bgPaint)
+
+        // 2. Main Radar Dish (Deep Sea / Diorama gradient)
+        val dishGradient = RadialGradient(
+            cx - radius * 0.3f, cy - radius * 0.3f, radius * 1.3f,
+            Color.parseColor("#17243B"), Color.parseColor("#0F1726"), Shader.TileMode.CLAMP
+        )
+        bgPaint.shader = dishGradient
+        canvas.drawCircle(cx, cy, radius, bgPaint)
+        bgPaint.shader = null
+
+        // 3. Glowing Sweep Beam (Smooth 3D Fan)
+        val sweepShader = SweepGradient(
+            cx, cy,
+            intArrayOf(
+                Color.argb(0, 0, 229, 255),
+                Color.argb(0, 0, 229, 255),
+                Color.argb(120, 0, 229, 255),
+                Color.argb(0, 0, 229, 255)
+            ),
+            floatArrayOf(0f, (sweepAngle - 60f + 360f) % 360f / 360f, sweepAngle / 360f, 1f)
+        )
+        sweepPaint.shader = sweepShader
+        canvas.drawCircle(cx, cy, radius, sweepPaint)
+        sweepPaint.shader = null
+
+        // 4. Concentric Toy Radar Rings
+        ringPaint.color = Color.argb(70, 0, 229, 255)
+        for (i in 1..3) {
+            canvas.drawCircle(cx, cy, radius * (i / 3f), ringPaint)
         }
-        for (band in 0..2) {
-            val y = ((glitch * 13 + band * 71) % (height + 30)) - 15
-            glitchPaint.color = Color.argb(35, if (band % 2 == 0) 255 else 143, if (band % 2 == 0) 79 else 247, if (band % 2 == 0) 216 else 255)
-            canvas.drawRect(0f, y.toFloat(), width.toFloat(), (y + 4).toFloat(), glitchPaint)
+
+        // Crosshairs
+        canvas.drawLine(cx - radius, cy, cx + radius, cy, ringPaint)
+        canvas.drawLine(cx, cy - radius, cx, cy + radius, ringPaint)
+
+        drawChannelHeat(canvas, cx, cy, radius)
+
+        // Expanding Energy Pulse Ring
+        val targetStrength = targetRssi?.let { ((it + 100).coerceIn(0, 70) / 70f) } ?: 0f
+        ringPaint.color = Color.argb(((1f - pulseRadius) * (110 + targetStrength * 120)).toInt(), 255, 214, 0)
+        ringPaint.strokeWidth = 3.5f
+        canvas.drawCircle(cx, cy, radius * (0.2f + pulseRadius * 0.78f), ringPaint)
+        ringPaint.strokeWidth = 3f
+
+        if (targetRssi != null) {
+            drawTargetLock(canvas, cx, cy, radius, targetStrength)
         }
-        val centerX = width / 2f
-        val centerY = height / 2f
-        val radius = min(width, height) * 0.39f
-        gridPaint.color = Color.rgb(26, 117, 143)
-        for (scale in 1..4) canvas.drawCircle(centerX, centerY, radius * scale / 4f, gridPaint)
-        canvas.drawLine(centerX - radius, centerY, centerX + radius, centerY, gridPaint)
-        canvas.drawLine(centerX, centerY - radius, centerX, centerY + radius, gridPaint)
-        canvas.drawLine(centerX - radius * 0.7f, centerY - radius * 0.7f, centerX + radius * 0.7f, centerY + radius * 0.7f, gridPaint)
-        canvas.drawLine(centerX + radius * 0.7f, centerY - radius * 0.7f, centerX - radius * 0.7f, centerY + radius * 0.7f, gridPaint)
-        val angle = Math.toRadians(sweep.toDouble())
-        canvas.drawLine(centerX, centerY, centerX + radius * cos(angle).toFloat(), centerY + radius * sin(angle).toFloat(), sweepPaint)
-        pulsePaint.alpha = (180 - pulse * 150).toInt()
-        canvas.drawCircle(centerX, centerY, radius * (0.2f + pulse * 0.8f), pulsePaint)
-        val visibleBlips = signalCount.coerceAtMost(18)
-        for (index in 0 until visibleBlips) {
-            val blipAngle = Math.toRadians((index * 47 + 18).toDouble())
-            val distance = radius * (0.25f + (index % 5) * 0.14f)
-            val x = centerX + distance * cos(blipAngle).toFloat()
-            val y = centerY + distance * sin(blipAngle).toFloat()
-            canvas.drawCircle(x, y, 5f, blipPaint)
-            if (index < 3) {
-                canvas.drawLine(x - 11f, y - 11f, x - 3f, y - 11f, pulsePaint)
-                canvas.drawLine(x - 11f, y - 11f, x - 11f, y - 3f, pulsePaint)
-                canvas.drawText("SIG-%02d".format(index + 1), x + 9f, y + 4f, textPaint)
+
+        // 5. 3D Candy Blip Signals (Rupee / Gem Pins)
+        val blips = signalCount.coerceAtMost(16)
+        for (i in 0 until blips) {
+            val angle = Math.toRadians((i * 53 + 22).toDouble())
+            val dist = radius * (0.28f + (i % 4) * 0.18f)
+            val bx = cx + dist * cos(angle).toFloat()
+            val by = cy + dist * sin(angle).toFloat()
+
+            val gemColor = when {
+                i < riskCount -> Color.parseColor("#FF3366")
+                i < riskCount + wifiCount -> Color.parseColor("#00F5D4")
+                else -> Color.parseColor("#FFE600")
             }
+
+            // Blip drop shadow
+            gemPaint.color = Color.argb(120, 0, 0, 0)
+            canvas.drawCircle(bx, by + 2.5f, 6.5f, gemPaint)
+
+            // Blip body
+            gemPaint.color = gemColor
+            if (i >= riskCount + wifiCount) {
+                canvas.drawRoundRect(RectF(bx - 5.5f, by - 5.5f, bx + 5.5f, by + 5.5f), 3f, 3f, gemPaint)
+            } else {
+                canvas.drawCircle(bx, by, 6.5f, gemPaint)
+            }
+
+            // Gloss shine spot
+            canvas.drawCircle(bx - 2f, by - 2f, 2.2f, highlightPaint)
         }
-        canvas.drawText("PASSIVE // RADAR", 14f, 20f, textPaint)
-        canvas.drawText("LIVE %02d".format(signalCount.coerceAtMost(99)), width - 78f, 20f, textPaint)
-        canvas.drawText("360° FIELD", 14f, height - 12f, textPaint)
-        canvas.drawText("RX ONLINE", width - 82f, height - 12f, textPaint)
+
+        // 6. Chunky Toy Outer Rim (Glossy Enamel Bezel)
+        rimPaint.color = Color.parseColor("#00E5FF")
+        canvas.drawCircle(cx, cy, radius, rimPaint)
+
+        // Top Gloss Sheen Reflection Arc
+        highlightPaint.alpha = 180
+        val oval = RectF(cx - radius + 4f, cy - radius + 4f, cx + radius - 4f, cy - radius * 0.1f)
+        canvas.drawArc(oval, 200f, 140f, false, ringPaint.apply {
+            color = Color.argb(160, 255, 255, 255)
+            strokeWidth = 4f
+        })
+
+        // 7. Playful Badges in Corners
+        textPaint.color = Color.parseColor("#00E5FF")
+        textPaint.textAlign = Paint.Align.LEFT
+        canvas.drawText("360 AIR RADAR", 16f, 22f, textPaint)
+
+        textPaint.color = Color.parseColor("#FFE600")
+        textPaint.textAlign = Paint.Align.RIGHT
+        canvas.drawText("WIFI $wifiCount  BLE $bleCount  RISK $riskCount", width - 16f, 22f, textPaint)
+
+        drawBottomHud(canvas, cx, cy, radius)
+    }
+
+    private fun drawChannelHeat(canvas: Canvas, cx: Float, cy: Float, radius: Float) {
+        if (channelHeat.isEmpty()) return
+        val maxCount = channelHeat.values.maxOrNull()?.coerceAtLeast(1) ?: 1
+        val sortedChannels = channelHeat.entries.sortedBy { it.key }.take(18)
+        sortedChannels.forEachIndexed { index, entry ->
+            val angle = Math.toRadians((index * (360.0 / sortedChannels.size)) - 90.0)
+            val strength = entry.value / maxCount.toFloat()
+            val inner = radius * 0.72f
+            val outer = radius * (0.78f + strength * 0.18f)
+            val sx = cx + inner * cos(angle).toFloat()
+            val sy = cy + inner * sin(angle).toFloat()
+            val ex = cx + outer * cos(angle).toFloat()
+            val ey = cy + outer * sin(angle).toFloat()
+            ringPaint.color = if (entry.key >= 36) Color.argb(150, 255, 214, 0) else Color.argb(150, 0, 245, 212)
+            ringPaint.strokeWidth = 4f + strength * 5f
+            canvas.drawLine(sx, sy, ex, ey, ringPaint)
+        }
+        ringPaint.strokeWidth = 3f
+    }
+
+    private fun drawTargetLock(canvas: Canvas, cx: Float, cy: Float, radius: Float, strength: Float) {
+        val angle = Math.toRadians((sweepAngle * 1.7f - 90f).toDouble())
+        val lockRadius = radius * (0.68f - strength * 0.34f)
+        val x = cx + lockRadius * cos(angle).toFloat()
+        val y = cy + lockRadius * sin(angle).toFloat()
+        val box = 18f + strength * 12f
+        rimPaint.color = Color.parseColor("#FFE600")
+        rimPaint.strokeWidth = 4f
+        canvas.drawLine(x - box, y - box, x - box * 0.35f, y - box, rimPaint)
+        canvas.drawLine(x - box, y - box, x - box, y - box * 0.35f, rimPaint)
+        canvas.drawLine(x + box, y - box, x + box * 0.35f, y - box, rimPaint)
+        canvas.drawLine(x + box, y - box, x + box, y - box * 0.35f, rimPaint)
+        canvas.drawLine(x - box, y + box, x - box * 0.35f, y + box, rimPaint)
+        canvas.drawLine(x - box, y + box, x - box, y + box * 0.35f, rimPaint)
+        canvas.drawLine(x + box, y + box, x + box * 0.35f, y + box, rimPaint)
+        canvas.drawLine(x + box, y + box, x + box, y + box * 0.35f, rimPaint)
+        gemPaint.color = Color.argb(190, 255, 214, 0)
+        canvas.drawCircle(x, y, 5f + strength * 7f, gemPaint)
+        rimPaint.strokeWidth = 6f
+    }
+
+    private fun drawBottomHud(canvas: Canvas, cx: Float, cy: Float, radius: Float) {
+        val panel = RectF(cx - radius * 0.92f, cy + radius * 0.63f, cx + radius * 0.92f, cy + radius * 0.91f)
+        barPaint.color = Color.argb(180, 4, 12, 24)
+        canvas.drawRoundRect(panel, 12f, 12f, barPaint)
+        rimPaint.color = Color.argb(170, 0, 229, 255)
+        rimPaint.strokeWidth = 2.5f
+        canvas.drawRoundRect(panel, 12f, 12f, rimPaint)
+        val rssi = targetRssi
+        val hotCold = when {
+            rssi == null -> "TARGET: $targetLabel"
+            rssi >= -45 -> "TARGET HOT  $rssi dBm"
+            rssi >= -65 -> "TARGET NEAR $rssi dBm"
+            else -> "TARGET FAR  $rssi dBm"
+        }
+        textPaint.textAlign = Paint.Align.CENTER
+        textPaint.color = if (rssi == null) Color.parseColor("#B3E5FC") else Color.parseColor("#FFE600")
+        canvas.drawText(hotCold.take(32), cx, panel.centerY() + 4f, textPaint)
     }
 }

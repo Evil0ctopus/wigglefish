@@ -13,5 +13,6 @@ android/local.properties
 android/app/build/
 tools/android-sdk/
 tools/gradle-*/
+tools/comfyui/
 tools/*.zip
 eim_config.toml

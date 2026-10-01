@@ -1,453 +1,2174 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rootContainer"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#050611">
+    android:background="#080A0F">
 
+    <!-- 3D Clay Cartoon Matrix Digital Rain Background -->
     <com.wigglefish.android.MatrixRainView
+        android:id="@+id/matrixBackground"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:alpha="0.14" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:padding="22dp"
-        android:background="#55050611">
-
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fillViewport="true"
-        android:scrollbars="vertical">
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
         android:orientation="vertical">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="WIGGLEFISH // FIELD SCANNER"
-        android:textColor="#FF4FD8"
-        android:textSize="23sp"
-        android:textStyle="bold" />
-
-    <TextView
-        android:id="@+id/statusText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
-        android:text="REAL SIGNALS // PASSIVE RECON // ESP32-C5"
-        android:textColor="#8FF7FF"
-        android:textSize="14sp" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:orientation="horizontal">
-
-        <TextView
-            android:layout_width="wrap_content"
+        <!-- ================= TOP 3D HEADER ================= -->
+        <LinearLayout
+            android:id="@+id/headerContainer"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#17112D"
-            android:padding="8dp"
-            android:text="WIFI RECON"
-            android:textColor="#FF4FD8"
-            android:textSize="10sp"
-            android:fontFamily="monospace" />
+            android:orientation="vertical"
+            android:paddingHorizontal="14dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="8dp"
+            android:background="#11151D">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:background="#0C2633"
-            android:padding="8dp"
-            android:text="BLE TRACKING"
-            android:textColor="#8FF7FF"
-            android:textSize="10sp"
-            android:fontFamily="monospace" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:background="#302116"
-            android:padding="8dp"
-            android:text="FIELD MODE"
-            android:textColor="#F0B35A"
-            android:textSize="10sp"
-            android:fontFamily="monospace" />
-    </LinearLayout>
+                <ImageView
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
+                    android:layout_marginEnd="6dp"
+                    android:contentDescription="Blue-ringed octopus emblem"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/blue_ring_octopus_emblem" />
 
-    <TextView
-        android:id="@+id/strongestText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="SIGNAL LOCK  --   strongest observation: waiting"
-        android:textColor="#F0B35A"
-        android:textSize="11sp"
-        android:fontFamily="monospace" />
+                <TextView
+                    android:id="@+id/appTitleText"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="WIGGLEFISH"
+                    android:textColor="#40E8D0"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-black" />
 
-    <TextView
-        android:id="@+id/locationText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
-        android:text="GPS LOCK  phone location optional"
-        android:textColor="#8FF7FF"
-        android:textSize="11sp"
-        android:fontFamily="monospace" />
+                <Button
+                    android:id="@+id/themeButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="38dp"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="12dp"
+                    android:gravity="center"
+                    android:text="🎨 THEME"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="#000000"
+                    android:background="@drawable/btn_3d_amber" />
 
-    <TextView
-        android:id="@+id/sourceText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
-        android:text="ESP32_SERIAL 0   PHONE 0   LEGACY_SERIAL 0"
-        android:textColor="#FF4FD8"
-        android:textSize="11sp"
-        android:fontFamily="monospace" />
+                <Button
+                    android:id="@+id/connectButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="38dp"
+                    android:layout_marginStart="8dp"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="12dp"
+                    android:gravity="center"
+                    android:text="🔌 CONNECT"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="#000000"
+                    android:background="@drawable/btn_3d_pink" />
+            </LinearLayout>
 
-    <TextView
-        android:id="@+id/deviceText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
-        android:text="USB DEVICE  NO USB DEVICE"
-        android:textColor="#8FF7FF"
-        android:textSize="11sp"
-        android:fontFamily="monospace" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="EVIL OCTOPUS  /  CODE. CRAFT. CONQUER."
+                android:textColor="#D39A72"
+                android:textSize="8sp"
+                android:fontFamily="monospace" />
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:orientation="horizontal">
+            <!-- Status badges -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-        <Button
-            android:id="@+id/phoneCollectionButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:minHeight="44dp"
-            android:text="PHONE COLLECTION ON"
-            android:textSize="10sp"
-            android:textColor="#050611"
-            android:backgroundTint="#8FF7FF" />
+                <TextView
+                    android:id="@+id/deviceBadge"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="USB: NO DEVICE DETECTED"
+                    android:textColor="#A9B1BF"
+                    android:textSize="10.5sp"
+                    android:textStyle="bold"
+                    android:fontFamily="monospace" />
 
-        <Button
-            android:id="@+id/usbCollectionButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_weight="1"
-            android:minHeight="44dp"
-            android:text="USB COLLECTION ON"
-            android:textSize="10sp"
-            android:textColor="#050611"
-            android:backgroundTint="#FF4FD8" />
-    </LinearLayout>
+                <TextView
+                    android:id="@+id/gpsBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="GPS: SEARCHING"
+                    android:textColor="#D39A72"
+                    android:textSize="10.5sp"
+                    android:textStyle="bold"
+                    android:fontFamily="monospace" />
+            </LinearLayout>
 
-    <TextView
-        android:id="@+id/sessionText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="SESSION  00 passes   0 records   waiting"
-        android:textColor="#5D958D"
-        android:textSize="11sp"
-        android:fontFamily="monospace" />
+            <TextView
+                android:id="@+id/threatAlertText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:background="#33FF1744"
+                android:padding="6dp"
+                android:gravity="center_vertical"
+                android:visibility="gone"
+                android:text="⚠️ DEFENSIVE ALERT"
+                android:textColor="#FF1744"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:fontFamily="monospace" />
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="FIELD OPS / PASSIVE COLLECTION"
-        android:textColor="#F0B35A"
-        android:textSize="11sp"
-        android:textStyle="bold" />
+            <TextView
+                android:id="@+id/appStatusText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:background="#3326C6DA"
+                android:padding="6dp"
+                android:gravity="center_vertical"
+                android:text="OPS: IDLE | Waiting for activity"
+                android:textColor="#A9B1BF"
+                android:textSize="10.5sp"
+                android:textStyle="bold"
+                android:fontFamily="monospace" />
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:orientation="vertical">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:orientation="horizontal">
 
+                <TextView
+                    android:id="@+id/uxAirspaceChipText"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/card_3d_surface"
+                    android:gravity="center"
+                    android:paddingHorizontal="4dp"
+                    android:text="AIR\n0 SIG"
+                    android:textAlignment="center"
+                    android:textColor="#40E8D0"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:fontFamily="monospace" />
+
+                <TextView
+                    android:id="@+id/uxOpsChipText"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/card_3d_surface"
+                    android:gravity="center"
+                    android:paddingHorizontal="4dp"
+                    android:text="TOOLS\n0 ON"
+                    android:textAlignment="center"
+                    android:textColor="#D39A72"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:fontFamily="monospace" />
+
+                <TextView
+                    android:id="@+id/uxTrafficChipText"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/card_3d_surface"
+                    android:gravity="center"
+                    android:paddingHorizontal="4dp"
+                    android:text="TRAFFIC\nIDLE"
+                    android:textAlignment="center"
+                    android:textColor="#C77BDB"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:fontFamily="monospace" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ================= 3D NAVIGATION TABS ================= -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="7dp"
+            android:background="#0B0D12">
 
-        <Button
-            android:id="@+id/connectButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:minWidth="0dp"
-            android:minHeight="52dp"
-            android:textSize="12sp"
-            android:text="CONNECT USB"
-            android:textColor="#050611"
-            android:backgroundTint="#FF4FD8" />
+                <Button
+                    android:id="@+id/tabScannerBtn"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="2dp"
+                    android:gravity="center"
+                    android:text="📡 SCANNER"
+                    android:textSize="9.5sp"
+                    android:textStyle="bold"
+                    android:textColor="#000000"
+                    android:background="@drawable/btn_3d_cyan" />
 
-        <Button
-            android:id="@+id/exportButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_weight="1"
-            android:minWidth="0dp"
-            android:minHeight="52dp"
-            android:textSize="12sp"
-            android:text="EXPORT"
-            android:textColor="#050611"
-            android:backgroundTint="#8FF7FF" />
+                <Button
+                    android:id="@+id/tabRadarBtn"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_marginStart="5dp"
+                    android:layout_weight="1"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="2dp"
+                    android:gravity="center"
+                    android:text="🛰️ AIRSPACE"
+                    android:textSize="9.5sp"
+                    android:textStyle="bold"
+                    android:textColor="#FFFFFF"
+                    android:background="@drawable/btn_3d_dark" />
 
+                <Button
+                    android:id="@+id/tabToolsBtn"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_marginStart="5dp"
+                    android:layout_weight="1"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="2dp"
+                    android:gravity="center"
+                    android:text="⚡ TOOLS"
+                    android:textSize="9.5sp"
+                    android:textStyle="bold"
+                    android:textColor="#FFFFFF"
+                    android:background="@drawable/btn_3d_dark" />
+
+                <Button
+                    android:id="@+id/tabAnalyticsBtn"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_marginStart="5dp"
+                    android:layout_weight="1"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="2dp"
+                    android:gravity="center"
+                    android:text="📊 INTEL"
+                    android:textSize="9.5sp"
+                    android:textStyle="bold"
+                    android:textColor="#FFFFFF"
+                    android:background="@drawable/btn_3d_dark" />
+
+                <Button
+                    android:id="@+id/tabExportsBtn"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_marginStart="5dp"
+                    android:layout_weight="1"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="2dp"
+                    android:gravity="center"
+                    android:text="💾 EXPORT"
+                    android:textSize="9.5sp"
+                    android:textStyle="bold"
+                    android:textColor="#FFFFFF"
+                    android:background="@drawable/btn_3d_dark" />
         </LinearLayout>
 
+        <!-- ================= MAIN CONTENT SECTIONS ================= -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <!-- 1. SCANNER SECTION -->
+            <LinearLayout
+                android:id="@+id/sectionScanner"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:padding="12dp"
+                android:visibility="visible">
+
+                <!-- 3D Summary stats row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/countWifiText"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@drawable/card_3d_surface"
+                        android:padding="12dp"
+                        android:gravity="center"
+                        android:textAlignment="center"
+                        android:text="0\nWi-Fi APs"
+                        android:textColor="#40E8D0"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/countBleText"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/card_3d_surface"
+                        android:padding="12dp"
+                        android:gravity="center"
+                        android:textAlignment="center"
+                        android:text="0\nBLE Beacons"
+                        android:textColor="#C77BDB"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/countThreatText"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/card_3d_surface"
+                        android:padding="12dp"
+                        android:gravity="center"
+                        android:textAlignment="center"
+                        android:text="0\nVulnerable"
+                        android:textColor="#D39A72"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- Filter pill row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/filterAllBtn"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_weight="1"
+                        android:minWidth="0dp"
+                        android:gravity="center"
+                        android:text="ALL"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:textColor="#000000"
+                        android:background="@drawable/btn_3d_cyan" />
+
+                    <Button
+                        android:id="@+id/filterWifiBtn"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:minWidth="0dp"
+                        android:gravity="center"
+                        android:text="WI-FI"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:textColor="#FFFFFF"
+                        android:background="@drawable/btn_3d_dark" />
+
+                    <Button
+                        android:id="@+id/filterBleBtn"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:minWidth="0dp"
+                        android:gravity="center"
+                        android:text="BLE"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:textColor="#FFFFFF"
+                        android:background="@drawable/btn_3d_dark" />
+
+                    <Button
+                        android:id="@+id/filterVulnBtn"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:minWidth="0dp"
+                        android:gravity="center"
+                        android:text="RISK"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:textColor="#FFFFFF"
+                        android:background="@drawable/btn_3d_dark" />
+                </LinearLayout>
+
+                <!-- Live Results View in 3D Card -->
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/card_3d_surface"
+                    android:padding="12dp">
+
+                    <ScrollView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scrollbars="vertical">
+
+                        <TextView
+                            android:id="@+id/resultsText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="monospace"
+                            android:lineSpacingExtra="6dp"
+                            android:text="Scanning 2.4GHz + 5GHz dual-band airspace..."
+                            android:textColor="#D6D9FF"
+                            android:textSize="11.5sp" />
+                    </ScrollView>
+                </FrameLayout>
+            </LinearLayout>
+
+            <!-- 2. RADAR & AIRSPACE SECTION -->
+            <ScrollView
+                android:id="@+id/sectionRadar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="12dp"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🛰️ AIRSPACE MONITOR // TARGET TRACKING"
+                        android:textColor="#40E8D0"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:fontFamily="sans-serif-black" />
+
+                    <com.wigglefish.android.SignalRadarView
+                        android:id="@+id/radarView"
+                        android:layout_width="match_parent"
+                        android:layout_height="220dp"
+                        android:layout_marginTop="8dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="36dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/card_3d_surface"
+                            android:gravity="center"
+                            android:text="● WIFI"
+                            android:textColor="#40E8D0"
+                            android:textSize="10.5sp"
+                            android:textStyle="bold"
+                            android:fontFamily="monospace" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="36dp"
+                            android:layout_marginStart="6dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/card_3d_surface"
+                            android:gravity="center"
+                            android:text="■ BLE"
+                            android:textColor="#D39A72"
+                            android:textSize="10.5sp"
+                            android:textStyle="bold"
+                            android:fontFamily="monospace" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="36dp"
+                            android:layout_marginStart="6dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/card_3d_surface"
+                            android:gravity="center"
+                            android:text="● RISK"
+                            android:textColor="#C77BDB"
+                            android:textSize="10.5sp"
+                            android:textStyle="bold"
+                            android:fontFamily="monospace" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="36dp"
+                            android:layout_marginStart="6dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/card_3d_surface"
+                            android:gravity="center"
+                            android:text="□ LOCK"
+                            android:textColor="#A9B1BF"
+                            android:textSize="10.5sp"
+                            android:textStyle="bold"
+                            android:fontFamily="monospace" />
+                    </LinearLayout>
+
+                    <!-- Code Stream Decoder -->
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="64dp"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/code_stream_background">
+
+                        <TextView
+                            android:id="@+id/decodeText"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:padding="8dp"
+                            android:text="ESP32-C5 DUAL-BAND // WS2812 READY"
+                            android:textColor="#C77BDB"
+                            android:textSize="13sp"
+                            android:textStyle="bold"
+                            android:fontFamily="monospace" />
+                    </FrameLayout>
+
+                    <!-- Airspace Monitor Tracking Card -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:background="@drawable/card_3d_accent"
+                        android:padding="14dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🛰️ AIRSPACE MONITOR"
+                            android:textColor="#D39A72"
+                            android:textSize="13sp"
+                            android:textStyle="bold"
+                            android:fontFamily="sans-serif-black" />
+
+                        <TextView
+                            android:id="@+id/airspaceStatusText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:text="STATUS: NO TARGET LOCKED"
+                            android:textColor="#40E8D0"
+                            android:textSize="11sp"
+                            android:textStyle="bold"
+                            android:fontFamily="monospace" />
+
+                        <TextView
+                            android:id="@+id/airspaceTargetText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="TARGET: NONE"
+                            android:textColor="#FFFFFF"
+                            android:textSize="11sp"
+                            android:fontFamily="monospace" />
+
+                        <TextView
+                            android:id="@+id/airspacePatternText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="PATTERN: NO ACTIVE TRACK"
+                            android:textColor="#A9B1BF"
+                            android:textSize="11sp"
+                            android:fontFamily="monospace" />
+
+                        <TextView
+                            android:id="@+id/airspaceTrackText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="TRACK: waiting for lock"
+                            android:textColor="#FFB74D"
+                            android:textSize="11sp"
+                            android:fontFamily="monospace" />
+
+                        <TextView
+                            android:id="@+id/airspaceVisualTrackText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:text="VISUAL TRACK: NONE"
+                            android:textColor="#D39A72"
+                            android:textSize="11sp"
+                            android:textStyle="bold"
+                            android:fontFamily="monospace" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:orientation="horizontal">
+
+                            <Button
+                                android:id="@+id/airspaceNewTrackBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="42dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:paddingHorizontal="4dp"
+                                android:text="NEW VISUAL TRACK"
+                                android:textSize="10sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000"
+                                android:background="@drawable/btn_3d_amber" />
+
+                            <Button
+                                android:id="@+id/airspaceLogSightingBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="42dp"
+                                android:layout_marginStart="6dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:paddingHorizontal="4dp"
+                                android:text="LOG SIGHTING"
+                                android:textSize="10sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000"
+                                android:background="@drawable/btn_3d_cyan" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/airspaceTimelineText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:text="No visual sightings logged"
+                            android:textColor="#D6D9FF"
+                            android:textSize="10sp"
+                            android:fontFamily="monospace" />
+
+                        <Button
+                            android:id="@+id/airspaceExportBtn"
+                            android:layout_width="match_parent"
+                            android:layout_height="40dp"
+                            android:layout_marginTop="6dp"
+                            android:text="EXPORT AIRSPACE LOG"
+                            android:textSize="10sp"
+                            android:textStyle="bold"
+                            android:textColor="#FFFFFF"
+                            android:background="@drawable/btn_3d_dark" />
+                    </LinearLayout>
+
+                    <!-- Geiger Target Hunter Card -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:background="@drawable/card_3d_accent"
+                        android:padding="14dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🎯 GEIGER TARGET HUNTER"
+                            android:textColor="#D39A72"
+                            android:textSize="13sp"
+                            android:textStyle="bold"
+                            android:fontFamily="sans-serif-black" />
+
+                        <TextView
+                            android:id="@+id/geigerTargetLabel"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="TARGET: NONE (Tap below or in Scanner to lock MAC)"
+                            android:textColor="#FFFFFF"
+                            android:textSize="11sp"
+                            android:fontFamily="monospace" />
+
+                        <TextView
+                            android:id="@+id/rssiHistoryText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="RSSI: Waiting for ping..."
+                            android:textColor="#A9B1BF"
+                            android:textSize="11sp"
+                            android:fontFamily="monospace" />
+
+                        <!-- Lock target full-width action button -->
+                        <Button
+                            android:id="@+id/geigerSelectBtn"
+                            android:layout_width="match_parent"
+                            android:layout_height="44dp"
+                            android:layout_marginTop="10dp"
+                            android:gravity="center"
+                            android:paddingHorizontal="8dp"
+                            android:text="🎯 LOCK TARGET FROM AIRSPACE"
+                            android:textSize="11.5sp"
+                            android:textStyle="bold"
+                            android:textColor="#000000"
+                            android:background="@drawable/btn_3d_amber" />
+
+                        <!-- Audio and Haptic toggles side-by-side -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:orientation="horizontal">
+
+                            <Button
+                                android:id="@+id/geigerAudioBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="42dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="6dp"
+                                android:text="🔊 AUDIO [ON]"
+                                android:textSize="11.5sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000"
+                                android:background="@drawable/btn_3d_cyan" />
+
+                            <Button
+                                android:id="@+id/geigerHapticBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="42dp"
+                                android:layout_marginStart="8dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="6dp"
+                                android:text="📳 HAPTIC [ON]"
+                                android:textSize="11.5sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000"
+                                android:background="@drawable/btn_3d_pink" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Airspace Channel Distribution -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:background="@drawable/card_3d_surface"
+                        android:padding="12dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="📊 2.4GHz &amp; 5GHz SPECTRUM ACTIVITY"
+                            android:textColor="#40E8D0"
+                            android:textSize="13sp"
+                            android:textStyle="bold"
+                            android:fontFamily="sans-serif-black" />
+
+                        <TextView
+                            android:id="@+id/spectrumText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:fontFamily="monospace"
+                            android:text="Scanning spectrum..."
+                            android:textColor="#A9B1BF"
+                            android:textSize="11.5sp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </ScrollView>
+
+            <!-- 3. CYBER OPS & TOOLS SECTION -->
+            <ScrollView
+                android:id="@+id/sectionTools"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="12dp"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="⚡ ACTIVE &amp; DEFENSIVE WIRELESS TOOLS"
+                        android:textColor="#C77BDB"
+                        android:textSize="13.5sp"
+                        android:textStyle="bold"
+                        android:fontFamily="sans-serif-black" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/card_3d_accent"
+                        android:padding="12dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/toolLiveOpsText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="LIVE OPS: 0 RUNNING"
+                            android:textColor="#D39A72"
+                            android:textSize="12.5sp"
+                            android:textStyle="bold"
+                            android:fontFamily="monospace" />
+
+                        <TextView
+                            android:id="@+id/toolTrafficText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="TX beacon 0 | BLE 0 | deauth 0 | probes 0 | RX raw 0"
+                            android:textColor="#FFFFFF"
+                            android:textSize="10.5sp"
+                            android:fontFamily="monospace" />
+
+                        <TextView
+                            android:id="@+id/toolLastEventText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="Last event: Tools idle"
+                            android:textColor="#A9B1BF"
+                            android:textSize="10.5sp"
+                            android:fontFamily="monospace" />
+
+                        <TextView
+                            android:id="@+id/toolEventFeedText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:background="#22000000"
+                            android:padding="8dp"
+                            android:text="[--:--:--] Waiting for tool activity"
+                            android:textColor="#E0F7FA"
+                            android:textSize="10sp"
+                            android:fontFamily="monospace" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:orientation="horizontal">
+
+                            <Button
+                                android:id="@+id/toolArmBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="42dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="4dp"
+                                android:text="🛡️ ARM"
+                                android:textSize="10.5sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000"
+                                android:background="@drawable/btn_3d_amber" />
+
+                            <Button
+                                android:id="@+id/toolPcapToggleBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="42dp"
+                                android:layout_marginStart="6dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="4dp"
+                                android:text="💾 PCAP"
+                                android:textSize="10.5sp"
+                                android:textStyle="bold"
+                                android:textColor="#FFFFFF"
+                                android:background="@drawable/btn_3d_dark" />
+
+                            <Button
+                                android:id="@+id/toolStopAllBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="42dp"
+                                android:layout_marginStart="6dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="4dp"
+                                android:text="⛔ STOP ALL"
+                                android:textSize="10.5sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000"
+                                android:background="@drawable/btn_3d_pink" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Tool 1: Beacon Flooder -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/card_3d_surface"
+                        android:padding="14dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/beaconStatusText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="📡 BEACON FLOODER: [OFF]"
+                            android:textColor="#40E8D0"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Injects fake SSIDs into 2.4G/5G airspace (Random, Rickroll, or Clones)."
+                            android:textColor="#A0A8CC"
+                            android:textSize="11sp" />
+
+                        <TextView
+                            android:id="@+id/beaconDetailText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:background="#22000000"
+                            android:padding="7dp"
+                            android:text="Mode OFF | TX 0 frames | Arm required"
+                            android:textColor="#A9B1BF"
+                            android:textSize="10sp"
+                            android:fontFamily="monospace" />
+
+                        <!-- Row 1: Random & Rickroll -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:orientation="horizontal">
+
+                            <Button
+                                android:id="@+id/toolBeaconRandomBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="42dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="4dp"
+                                android:text="🎲 RANDOM"
+                                android:textSize="11sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000"
+                                android:background="@drawable/btn_3d_cyan" />
+
+                            <Button
+                                android:id="@+id/toolBeaconRickrollBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="42dp"
+                                android:layout_marginStart="8dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="4dp"
+                                android:text="🎵 RICKROLL"
+                                android:textSize="11sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000"
+                                android:background="@drawable/btn_3d_amber" />
+                        </LinearLayout>
+
+                        <!-- Row 2: Clone & Stop -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:orientation="horizontal">
+
+                            <Button
+                                android:id="@+id/toolBeaconCloneBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="42dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="4dp"
+                                android:text="👥 CLONE APS"
+                                android:textSize="11sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000"
+                                android:background="@drawable/btn_3d_pink" />
+
+                            <Button
+                                android:id="@+id/toolBeaconStopBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="42dp"
+                                android:layout_marginStart="8dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="4dp"
+                                android:text="⛔ STOP FLOOD"
+                                android:textSize="11sp"
+                                android:textStyle="bold"
+                                android:textColor="#FFFFFF"
+                                android:background="@drawable/btn_3d_dark" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Tool 2: BLE Ecosystem Spammer -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:background="@drawable/card_3d_surface"
+                        android:padding="14dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/bleSpamStatusText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="📶 BLE ECOSYSTEM SPAMMER: [OFF]"
+                            android:textColor="#C77BDB"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Triggers pairing modals for Apple, Android FastPair, Samsung &amp; Windows."
+                            android:textColor="#A0A8CC"
+                            android:textSize="11sp" />
+
+                        <TextView
+                            android:id="@+id/bleDetailText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:background="#22000000"
+                            android:padding="7dp"
+                            android:text="Mode OFF | TX 0 adverts | Arm required"
+                            android:textColor="#A9B1BF"
+                            android:textSize="10sp"
+                            android:fontFamily="monospace" />
+
+                        <!-- Row 1: Apple & Android -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:orientation="horizontal">
+
+                            <Button
+                                android:id="@+id/toolBleAppleBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="42dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="4dp"
+                                android:text="🍏 APPLE MODALS"
+                                android:textSize="11sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000"
+                                android:background="@drawable/btn_3d_cyan" />
+
+                            <Button
+                                android:id="@+id/toolBleAndroidBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="42dp"
+                                android:layout_marginStart="8dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="4dp"
+                                android:text="🤖 ANDROID PAIR"
+                                android:textSize="11sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000"
+                                android:background="@drawable/btn_3d_amber" />
+                        </LinearLayout>
+
+                        <!-- Row 2: All-In-One & Stop -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:orientation="horizontal">
+
+                            <Button
+                                android:id="@+id/toolBleAllBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="42dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="4dp"
+                                android:text="🔄 ALL-IN-ONE"
+                                android:textSize="11sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000"
+                                android:background="@drawable/btn_3d_pink" />
+
+                            <Button
+                                android:id="@+id/toolBleStopBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="42dp"
+                                android:layout_marginStart="8dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="4dp"
+                                android:text="⛔ STOP SPAM"
+                                android:textSize="11sp"
+                                android:textStyle="bold"
+                                android:textColor="#FFFFFF"
+                                android:background="@drawable/btn_3d_dark" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Tool 3: Handshake Hunter & Deauth -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:background="@drawable/card_3d_surface"
+                        android:padding="14dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🔑 EAPOL &amp; PMKID HANDSHAKE HUNTER"
+                            android:textColor="#D39A72"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Select target AP to deauth, capture 4-way handshake, and export .22000 hashes."
+                            android:textColor="#A0A8CC"
+                            android:textSize="11sp" />
+
+                        <TextView
+                            android:id="@+id/huntDetailText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:background="#22000000"
+                            android:padding="7dp"
+                            android:text="Target NONE | Deauth TX 0 | Keys 0"
+                            android:textColor="#A9B1BF"
+                            android:textSize="10sp"
+                            android:fontFamily="monospace" />
+
+                        <TextView
+                            android:id="@+id/huntStageText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:background="#3326C6DA"
+                            android:padding="8dp"
+                            android:text="STAGE: IDLE | Pick a WPA/WPA2 AP to begin"
+                            android:textColor="#D39A72"
+                            android:textSize="10.5sp"
+                            android:textStyle="bold"
+                            android:fontFamily="monospace" />
+
+                        <TextView
+                            android:id="@+id/huntChecklistText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:background="#22000000"
+                            android:padding="8dp"
+                            android:text="Target: none\nPCAP: off\nCapture: waiting"
+                            android:textColor="#D6D9FF"
+                            android:textSize="10sp"
+                            android:fontFamily="monospace" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:orientation="horizontal">
+
+                            <Button
+                                android:id="@+id/toolHuntLaunchBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="42dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="4dp"
+                                android:text="🔑 HUNT AP"
+                                android:textSize="11sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000"
+                                android:background="@drawable/btn_3d_amber" />
+
+                            <Button
+                                android:id="@+id/toolDeauthPulseBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="42dp"
+                                android:layout_marginStart="6dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="4dp"
+                                android:text="⚡ DEAUTH"
+                                android:textSize="11sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000"
+                                android:background="@drawable/btn_3d_pink" />
+
+                            <Button
+                                android:id="@+id/toolKarmaProbesBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="42dp"
+                                android:layout_marginStart="6dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="4dp"
+                                android:text="📋 PROBES"
+                                android:textSize="11sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000"
+                                android:background="@drawable/btn_3d_cyan" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:orientation="horizontal">
+
+                            <Button
+                                android:id="@+id/toolHuntStopBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="42dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="4dp"
+                                android:text="⛔ STOP HUNT"
+                                android:textSize="10.5sp"
+                                android:textStyle="bold"
+                                android:textColor="#FFFFFF"
+                                android:background="@drawable/btn_3d_dark" />
+
+                            <Button
+                                android:id="@+id/toolHuntExportBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="42dp"
+                                android:layout_marginStart="8dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="4dp"
+                                android:text="🔑 EXPORT KEYS"
+                                android:textSize="10.5sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000"
+                                android:background="@drawable/btn_3d_amber" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Tool 4: Smart RGB Light Hijacker -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:background="@drawable/card_3d_surface"
+                        android:padding="14dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="💡 SMART RGB LIGHT &amp; BULB HIJACKER"
+                            android:textColor="#40E8D0"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Remotely override nearby BLE &amp; Wi-Fi LED strips (Triones, Lotus, Elk-BLEDOM, MagicHome)."
+                            android:textColor="#A0A8CC"
+                            android:textSize="11sp" />
+
+                        <TextView
+                            android:id="@+id/lightDetailText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:background="#22000000"
+                            android:padding="7dp"
+                            android:text="Mode OFF | Commands 0 | One-shot colors available"
+                            android:textColor="#A9B1BF"
+                            android:textSize="10sp"
+                            android:fontFamily="monospace" />
+
+                        <!-- Power Controls -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:orientation="horizontal">
+
+                            <Button
+                                android:id="@+id/toolLightOnBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="40dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="4dp"
+                                android:text="💡 LIGHTS ON"
+                                android:textSize="11sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000"
+                                android:background="@drawable/btn_3d_cyan" />
+
+                            <Button
+                                android:id="@+id/toolLightOffBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="40dp"
+                                android:layout_marginStart="8dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="4dp"
+                                android:text="🌑 LIGHTS OFF"
+                                android:textSize="11sp"
+                                android:textStyle="bold"
+                                android:textColor="#FFFFFF"
+                                android:background="@drawable/btn_3d_dark" />
+                        </LinearLayout>
+
+                        <!-- Color Preset Buttons -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:orientation="horizontal">
+
+                            <Button
+                                android:id="@+id/toolLightRedBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="38dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:text="🔴 RED"
+                                android:textSize="10.5sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000"
+                                android:background="@drawable/btn_3d_pink" />
+
+                            <Button
+                                android:id="@+id/toolLightGreenBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="38dp"
+                                android:layout_marginStart="4dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:text="🟢 GREEN"
+                                android:textSize="10.5sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000"
+                                android:background="@drawable/btn_3d_cyan" />
+
+                            <Button
+                                android:id="@+id/toolLightBlueBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="38dp"
+                                android:layout_marginStart="4dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:text="🔵 BLUE"
+                                android:textSize="10.5sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000"
+                                android:background="@drawable/btn_3d_cyan" />
+
+                            <Button
+                                android:id="@+id/toolLightGoldBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="38dp"
+                                android:layout_marginStart="4dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:text="🟡 GOLD"
+                                android:textSize="10.5sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000"
+                                android:background="@drawable/btn_3d_amber" />
+                        </LinearLayout>
+
+                        <!-- Animation Modes -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:orientation="horizontal">
+
+                            <Button
+                                android:id="@+id/toolLightRainbowBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="40dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="4dp"
+                                android:text="🌈 RAINBOW CYCLE"
+                                android:textSize="10.5sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000"
+                                android:background="@drawable/btn_3d_amber" />
+
+                            <Button
+                                android:id="@+id/toolLightStrobeBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="40dp"
+                                android:layout_marginStart="8dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="4dp"
+                                android:text="⚡ STROBE OVERRIDE"
+                                android:textSize="10.5sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000"
+                                android:background="@drawable/btn_3d_pink" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Tool 5: Evil Captive Portal -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:background="@drawable/card_3d_surface"
+                        android:padding="14dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/portalStatusText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🕸️ EVIL CAPTIVE PORTAL: [INACTIVE]"
+                            android:textColor="#C77BDB"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Spins up Rogue AP + DNS Catch-All + Phishing Portal to harvest passwords."
+                            android:textColor="#A0A8CC"
+                            android:textSize="11sp" />
+
+                        <TextView
+                            android:id="@+id/portalDetailText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:background="#22000000"
+                            android:padding="7dp"
+                            android:text="SSID none | Credentials 0 | Arm required"
+                            android:textColor="#A9B1BF"
+                            android:textSize="10sp"
+                            android:fontFamily="monospace" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:orientation="horizontal">
+
+                            <Button
+                                android:id="@+id/toolPortalLaunchBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="42dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="4dp"
+                                android:text="🕸️ LAUNCH PORTAL"
+                                android:textSize="11sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000"
+                                android:background="@drawable/btn_3d_pink" />
+
+                            <Button
+                                android:id="@+id/toolPortalStopBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="42dp"
+                                android:layout_marginStart="8dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="4dp"
+                                android:text="⛔ STOP PORTAL"
+                                android:textSize="11sp"
+                                android:textStyle="bold"
+                                android:textColor="#FFFFFF"
+                                android:background="@drawable/btn_3d_dark" />
+                        </LinearLayout>
+
+                        <Button
+                            android:id="@+id/toolPortalViewCredsBtn"
+                            android:layout_width="match_parent"
+                            android:layout_height="42dp"
+                            android:layout_marginTop="8dp"
+                            android:gravity="center"
+                            android:text="🔑 HARVESTED CREDENTIALS (0)"
+                            android:textSize="11sp"
+                            android:textStyle="bold"
+                            android:textColor="#000000"
+                            android:background="@drawable/btn_3d_amber" />
+                    </LinearLayout>
+
+                    <!-- Tool 6: Probe Flooder & Recon Suite -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:background="@drawable/card_3d_surface"
+                        android:padding="14dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/probeFloodStatusText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🌊 PROBE FLOODER &amp; RECON SUITE"
+                            android:textColor="#D39A72"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Floods IDS systems and inspects connected clients, skimmers &amp; WPS status."
+                            android:textColor="#A0A8CC"
+                            android:textSize="11sp" />
+
+                        <TextView
+                            android:id="@+id/probeDetailText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:background="#22000000"
+                            android:padding="7dp"
+                            android:text="Flood OFF | Probe TX 0 | Clients 0 | Skimmers 0"
+                            android:textColor="#A9B1BF"
+                            android:textSize="10sp"
+                            android:fontFamily="monospace" />
+
+                        <!-- Probe flood controls -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:orientation="horizontal">
+
+                            <Button
+                                android:id="@+id/toolProbeFloodStartBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="42dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="4dp"
+                                android:text="🌊 PROBE FLOOD ON"
+                                android:textSize="11sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000"
+                                android:background="@drawable/btn_3d_cyan" />
+
+                            <Button
+                                android:id="@+id/toolProbeFloodStopBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="42dp"
+                                android:layout_marginStart="8dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="4dp"
+                                android:text="⛔ STOP FLOOD"
+                                android:textSize="11sp"
+                                android:textStyle="bold"
+                                android:textColor="#FFFFFF"
+                                android:background="@drawable/btn_3d_dark" />
+                        </LinearLayout>
+
+                        <!-- Recon Inspector Dialog Buttons -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:orientation="horizontal">
+
+                            <Button
+                                android:id="@+id/toolViewStationsBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="42dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="4dp"
+                                android:text="📱 CLIENTS (0)"
+                                android:textSize="10.5sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000"
+                                android:background="@drawable/btn_3d_amber" />
+
+                            <Button
+                                android:id="@+id/toolViewSkimmersBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="42dp"
+                                android:layout_marginStart="6dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="4dp"
+                                android:text="🕵️ SKIMMERS (0)"
+                                android:textSize="10.5sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000"
+                                android:background="@drawable/btn_3d_pink" />
+
+                            <Button
+                                android:id="@+id/toolViewWpsPmfBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="42dp"
+                                android:layout_marginStart="6dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="4dp"
+                                android:text="🛡️ WPS/PMF"
+                                android:textSize="10.5sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000"
+                                android:background="@drawable/btn_3d_cyan" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Tool 7: WS2812 RGB LED Control -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:background="@drawable/card_3d_surface"
+                        android:padding="14dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="💡 WS2812 RGB HARDWARE LED ALERT TEST"
+                            android:textColor="#40E8D0"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Command the onboard addressable RGB LED on the ESP32-C5 Tiny."
+                            android:textColor="#A0A8CC"
+                            android:textSize="11sp" />
+
+                        <TextView
+                            android:id="@+id/ledDetailText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:background="#22000000"
+                            android:padding="7dp"
+                            android:text="LED READY | Alerts mirror key events and threats"
+                            android:textColor="#A9B1BF"
+                            android:textSize="10sp"
+                            android:fontFamily="monospace" />
+
+                        <!-- Row 1: Red & Gold -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:orientation="horizontal">
+
+                            <Button
+                                android:id="@+id/ledAlertRedBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="40dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="6dp"
+                                android:text="🔴 RED STROBE"
+                                android:textSize="11sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000"
+                                android:background="@drawable/btn_3d_pink" />
+
+                            <Button
+                                android:id="@+id/ledAlertGoldBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="40dp"
+                                android:layout_marginStart="8dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="6dp"
+                                android:text="🟡 GOLD FLASH"
+                                android:textSize="11sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000"
+                                android:background="@drawable/btn_3d_amber" />
+                        </LinearLayout>
+
+                        <!-- Row 2: Cyan & Magenta -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:orientation="horizontal">
+
+                            <Button
+                                android:id="@+id/ledAlertCyanBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="40dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="6dp"
+                                android:text="🔵 CYAN PULSE"
+                                android:textSize="11sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000"
+                                android:background="@drawable/btn_3d_cyan" />
+
+                            <Button
+                                android:id="@+id/ledAlertMagentaBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="40dp"
+                                android:layout_marginStart="8dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="6dp"
+                                android:text="🟣 MAGENTA PULSE"
+                                android:textSize="11sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000"
+                                android:background="@drawable/btn_3d_pink" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </ScrollView>
+
+            <!-- 4. ANALYTICS & INTEL SECTION -->
+            <ScrollView
+                android:id="@+id/sectionAnalytics"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="12dp"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="📊 AIRSPACE INTELLIGENCE &amp; SCORING"
+                        android:textColor="#40E8D0"
+                        android:textSize="13.5sp"
+                        android:textStyle="bold"
+                        android:fontFamily="sans-serif-black" />
+
+                    <TextView
+                        android:id="@+id/intelPostureText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/card_3d_accent"
+                        android:padding="14dp"
+                        android:text="POSTURE: WAITING FOR AIRSPACE DATA"
+                        android:textColor="#D39A72"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:fontFamily="monospace" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/intelCountsText"
+                            android:layout_width="0dp"
+                            android:layout_height="96dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/card_3d_surface"
+                            android:gravity="center"
+                            android:padding="8dp"
+                            android:text="0 WIFI\n0 BLE\n0 RISK"
+                            android:textAlignment="center"
+                            android:textColor="#40E8D0"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            android:fontFamily="monospace" />
+
+                        <TextView
+                            android:id="@+id/intelTopFindingsText"
+                            android:layout_width="0dp"
+                            android:layout_height="96dp"
+                            android:layout_marginStart="8dp"
+                            android:layout_weight="1.65"
+                            android:background="@drawable/card_3d_surface"
+                            android:gravity="center_vertical"
+                            android:padding="10dp"
+                            android:text="Top findings will appear here."
+                            android:textColor="#D6D9FF"
+                            android:textSize="10.5sp"
+                            android:fontFamily="monospace" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="horizontal">
+
+                        <Button
+                            android:id="@+id/intelStationsBtn"
+                            android:layout_width="0dp"
+                            android:layout_height="42dp"
+                            android:layout_weight="1"
+                            android:minWidth="0dp"
+                            android:gravity="center"
+                            android:paddingHorizontal="4dp"
+                            android:text="STA 0"
+                            android:textSize="9.5sp"
+                            android:textStyle="bold"
+                            android:textColor="#000000"
+                            android:background="@drawable/btn_3d_amber" />
+
+                        <Button
+                            android:id="@+id/intelSkimmersBtn"
+                            android:layout_width="0dp"
+                            android:layout_height="42dp"
+                            android:layout_marginStart="6dp"
+                            android:layout_weight="1"
+                            android:minWidth="0dp"
+                            android:gravity="center"
+                            android:paddingHorizontal="4dp"
+                            android:text="SKIM 0"
+                            android:textSize="9.5sp"
+                            android:textStyle="bold"
+                            android:textColor="#000000"
+                            android:background="@drawable/btn_3d_pink" />
+
+                        <Button
+                            android:id="@+id/intelWpsPmfBtn"
+                            android:layout_width="0dp"
+                            android:layout_height="42dp"
+                            android:layout_marginStart="6dp"
+                            android:layout_weight="1"
+                            android:minWidth="0dp"
+                            android:gravity="center"
+                            android:paddingHorizontal="4dp"
+                            android:text="WPS 0"
+                            android:textSize="9.5sp"
+                            android:textStyle="bold"
+                            android:textColor="#000000"
+                            android:background="@drawable/btn_3d_cyan" />
+
+                        <Button
+                            android:id="@+id/intelHashesBtn"
+                            android:layout_width="0dp"
+                            android:layout_height="42dp"
+                            android:layout_marginStart="6dp"
+                            android:layout_weight="1"
+                            android:minWidth="0dp"
+                            android:gravity="center"
+                            android:paddingHorizontal="4dp"
+                            android:text="KEY 0"
+                            android:textSize="9.5sp"
+                            android:textStyle="bold"
+                            android:textColor="#000000"
+                            android:background="@drawable/btn_3d_amber" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/analyticsContentText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/card_3d_surface"
+                        android:padding="14dp"
+                        android:fontFamily="monospace"
+                        android:lineSpacingExtra="5dp"
+                        android:text="Gathering intelligence..."
+                        android:textColor="#D6D9FF"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </ScrollView>
+
+            <!-- 5. EXPORT & SETTINGS SECTION -->
+            <ScrollView
+                android:id="@+id/sectionExports"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="12dp"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="💾 EXPORT DATA &amp; SESSION CONTROLS"
+                        android:textColor="#D39A72"
+                        android:textSize="13.5sp"
+                        android:textStyle="bold"
+                        android:fontFamily="sans-serif-black" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/card_3d_surface"
+                        android:padding="14dp"
+                        android:orientation="vertical">
+
+                        <Button
+                            android:id="@+id/exportPcapBtn"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:gravity="center"
+                            android:text="📦 EXPORT WIRESHARK PCAP CAPTURE"
+                            android:textSize="11sp"
+                            android:textStyle="bold"
+                            android:textColor="#000000"
+                            android:background="@drawable/btn_3d_cyan" />
+
+                        <Button
+                            android:id="@+id/exportHashcatBtn"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:layout_marginTop="8dp"
+                            android:gravity="center"
+                            android:text="🔑 EXPORT HASHCAT .22000 HASHES"
+                            android:textSize="11sp"
+                            android:textStyle="bold"
+                            android:textColor="#000000"
+                            android:background="@drawable/btn_3d_amber" />
+
+                        <Button
+                            android:id="@+id/exportCsvBtn"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:layout_marginTop="8dp"
+                            android:gravity="center"
+                            android:text="📄 EXPORT WARDRIVE CSV (WIGLE.NET)"
+                            android:textSize="11sp"
+                            android:textStyle="bold"
+                            android:textColor="#000000"
+                            android:background="@drawable/btn_3d_pink" />
+
+                        <Button
+                            android:id="@+id/exportGpxBtn"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:layout_marginTop="8dp"
+                            android:gravity="center"
+                            android:text="🗺️ EXPORT GPS GPX TRACK"
+                            android:textSize="11sp"
+                            android:textStyle="bold"
+                            android:textColor="#000000"
+                            android:background="@drawable/btn_3d_cyan" />
+
+                        <Button
+                            android:id="@+id/exportJsonBtn"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:layout_marginTop="8dp"
+                            android:gravity="center"
+                            android:text="📋 EXPORT RAW JSON SESSION LOG"
+                            android:textSize="11sp"
+                            android:textStyle="bold"
+                            android:textColor="#000000"
+                            android:background="@drawable/btn_3d_amber" />
+
+                        <Button
+                            android:id="@+id/clearSessionBtn"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:layout_marginTop="16dp"
+                            android:gravity="center"
+                            android:text="🗑️ CLEAR ALL CAPTURED OBSERVATIONS"
+                            android:textSize="11sp"
+                            android:textStyle="bold"
+                            android:textColor="#FFFFFF"
+                            android:background="@drawable/btn_3d_dark" />
+                    </LinearLayout>
+                </LinearLayout>
+            </ScrollView>
+        </FrameLayout>
+
+        <!-- ================= DOCKED 3D PWN-PET COMPANION DOCK ================= -->
         <LinearLayout
+            android:id="@+id/petDockContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:orientation="horizontal">
+            android:orientation="vertical"
+            android:layout_marginHorizontal="8dp"
+            android:layout_marginBottom="4dp"
+            android:padding="8dp"
+            android:background="@drawable/card_3d_pet_dock">
 
-        <Button
-            android:id="@+id/csvButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_weight="1"
-            android:minWidth="0dp"
-            android:minHeight="52dp"
-            android:textSize="12sp"
-            android:text="CSV"
-            android:textColor="#050611"
-            android:backgroundTint="#F0B35A" />
+            <!-- Live Reef Aquarium Screen (Wiggler swims freely here) -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="144dp"
+                android:background="@drawable/card_3d_surface">
 
-        <Button
-            android:id="@+id/clearButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_weight="1"
-            android:minWidth="0dp"
-            android:minHeight="52dp"
-            android:textSize="12sp"
-            android:text="CLEAR"
-            android:textColor="#F4F7FF"
-            android:backgroundTint="#17112D" />
+                <com.wigglefish.android.CopilotOctopusAnimationView
+                    android:id="@+id/wigglePetView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+            </FrameLayout>
+
+            <!-- Pet HUD, Sassy Speech & Stats Row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:orientation="vertical">
+
+                <!-- Header Row: Name & Level Badge + Mood & Pwnd count -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/petNameTitleText"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="🐙 OCTO LVL 1 (Signal Sprout)"
+                        android:textColor="#40E8D0"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:fontFamily="sans-serif-black" />
+
+                    <TextView
+                        android:id="@+id/petPwnedBadgeText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🔑 PWND: 0"
+                        android:textColor="#D39A72"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:fontFamily="monospace" />
+                </LinearLayout>
+
+                <!-- Sassy Speech Bubble -->
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/speech_bubble_3d"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp">
+
+                    <TextView
+                        android:id="@+id/petSpeechText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Signal's up. Let's see what the airwaves are saying."
+                        android:textColor="#FFFFFF"
+                        android:textSize="11.5sp"
+                        android:textStyle="bold"
+                        android:lineSpacingExtra="2dp"
+                        android:fontFamily="monospace" />
+                </FrameLayout>
+
+                <!-- EXP Progress Mini Bar -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/petExpText"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="EXP: 0/100"
+                        android:textColor="#9AB5B4"
+                        android:textSize="10sp"
+                        android:fontFamily="monospace" />
+
+                    <TextView
+                        android:id="@+id/petMoodTagText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="[IDLE] TAP TO INTERACT"
+                        android:textColor="#C77BDB"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:fontFamily="monospace" />
+                </LinearLayout>
+            </LinearLayout>
         </LinearLayout>
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="18dp"
-        android:orientation="horizontal">
-
-        <TextView
-            android:id="@+id/countText"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:background="#10142B"
-            android:padding="14dp"
-            android:text="0\nWi-Fi"
-            android:textColor="#8FF7FF"
-            android:textSize="18sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/bleCountText"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
-            android:layout_weight="1"
-            android:background="#10142B"
-            android:padding="14dp"
-            android:text="0\nBLE"
-            android:textColor="#FF4FD8"
-            android:textSize="18sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/gpsCountText"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
-            android:layout_weight="1"
-            android:background="#10142B"
-            android:padding="14dp"
-            android:text="0&#10;GPS SAT"
-            android:textColor="#F0B35A"
-            android:textSize="18sp"
-            android:textStyle="bold" />
-    </LinearLayout>
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="18dp"
-        android:text="AIRSPACE / CHANNEL ACTIVITY"
-        android:textColor="#F0B35A"
-        android:textSize="11sp"
-        android:textStyle="bold" />
-
-    <TextView
-        android:id="@+id/spectrumText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="7dp"
-        android:background="#10142B"
-        android:fontFamily="monospace"
-        android:lineSpacingExtra="3dp"
-        android:padding="12dp"
-        android:text="No channel activity yet"
-        android:textColor="#8FF7FF"
-        android:textSize="12sp" />
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="LIVE OBSERVATIONS"
-        android:textColor="#F0B35A"
-        android:textSize="11sp"
-        android:textStyle="bold" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:orientation="horizontal">
-
-        <Button
-            android:id="@+id/allButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:minHeight="44dp"
-            android:text="ALL"
-            android:textColor="#050611"
-            android:backgroundTint="#F0B35A" />
-
-        <Button
-            android:id="@+id/wifiButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:layout_weight="1"
-            android:minHeight="44dp"
-            android:text="WI-FI"
-            android:textColor="#8FF7FF"
-            android:backgroundTint="#17112D" />
-
-        <Button
-            android:id="@+id/bleButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:layout_weight="1"
-            android:minHeight="44dp"
-            android:text="BLE"
-            android:textColor="#FF4FD8"
-            android:backgroundTint="#17112D" />
-    </LinearLayout>
-
-    <TextView
-        android:id="@+id/viewText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="VIEW  ALL   /   0 live signals"
-        android:textColor="#8FF7FF"
-        android:textSize="11sp"
-        android:fontFamily="monospace" />
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="14dp"
-        android:text="THREAT RADAR / PASSIVE SIGNAL FIELD"
-        android:textColor="#FF4FD8"
-        android:textSize="11sp"
-        android:textStyle="bold" />
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:text="CODE STREAM / LIVE VISUALIZER"
-        android:textColor="#8FF7FF"
-        android:textSize="11sp"
-        android:textStyle="bold" />
-
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="88dp"
-        android:layout_marginTop="5dp"
-        android:background="@drawable/code_stream_background"
-        android:padding="2dp">
-
-        <com.wigglefish.android.MatrixRainView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-
-        <TextView
-            android:id="@+id/decodeText"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center_vertical"
-            android:padding="14dp"
-            android:text=""
-            android:textColor="#FF4FD8"
-            android:textSize="13sp"
-            android:lineSpacingExtra="4dp"
-            android:fontFamily="monospace" />
-    </FrameLayout>
-
-    <com.wigglefish.android.SignalRadarView
-        android:id="@+id/radarView"
-        android:layout_width="match_parent"
-        android:layout_height="190dp"
-        android:layout_marginTop="6dp" />
-
-    <TextView
-        android:id="@+id/categoryText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:background="#10142B"
-        android:fontFamily="monospace"
-        android:padding="10dp"
-        android:text="CAMERAS  00     FLIPPER-LIKE  00     AIRTAG-LIKE  00&#10;OTHER WIFI  00     OTHER BLE  00"
-        android:textColor="#8FF7FF"
-        android:textSize="11sp" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="7dp"
-        android:background="#0A0D20"
-        android:padding="14dp"
-        android:orientation="vertical">
-
-        <TextView
-            android:id="@+id/resultsText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:fontFamily="monospace"
-            android:lineSpacingExtra="7dp"
-            android:text="Waiting for passive observations..."
-            android:textColor="#D6D9FF"
-            android:textSize="13sp" />
-    </LinearLayout>
-    </LinearLayout>
-    </ScrollView>
     </LinearLayout>
 </FrameLayout>

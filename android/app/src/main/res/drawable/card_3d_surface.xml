@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Bottom 3D shadow block -->
+    <item android:top="6dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="8dp" />
+            <solid android:color="#05070A" />
+        </shape>
+    </item>
+    <!-- Card Face with gradient and thick border -->
+    <item android:bottom="6dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="8dp" />
+            <gradient
+                android:startColor="#20232C"
+                android:endColor="#14171E"
+                android:angle="270" />
+            <stroke android:width="1dp" android:color="#3A424E" />
+        </shape>
+    </item>
+    <!-- Top inner highlight gloss reflection -->
+    <item android:bottom="16dp" android:top="2dp" android:left="8dp" android:right="8dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="5dp" />
+            <solid android:color="#0DFFFFFF" />
+        </shape>
+    </item>
+</layer-list>
+

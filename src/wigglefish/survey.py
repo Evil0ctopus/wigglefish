@@ -11,6 +11,8 @@ import json
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
+from . import mac_vendors, security_scoring
+
 
 @dataclass(frozen=True)
 class WifiObservation:
@@ -22,6 +24,11 @@ class WifiObservation:
     rssi: int | None = None
     security: str | None = None
     vendor: str | None = None
+    device_type: str | None = None
+    security_score: int | None = None
+    risk_level: str | None = None
+    vulnerabilities: list[str] = field(default_factory=list)
+    recommendations: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)

@@ -1,0 +1,59 @@
+{
+  "3": {
+    "class_type": "KSampler",
+    "inputs": {
+      "seed": 843106521,
+      "steps": 30,
+      "cfg": 5.8,
+      "sampler_name": "dpmpp_2m_sde",
+      "scheduler": "karras",
+      "denoise": 1.0,
+      "model": ["4", 0],
+      "positive": ["6", 0],
+      "negative": ["7", 0],
+      "latent_image": ["5", 0]
+    }
+  },
+  "4": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "RealVisXL_V4.0.safetensors"
+    }
+  },
+  "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
+    }
+  },
+  "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "Photorealistic macro wildlife portrait of a southern blue-ringed octopus (Hapalochlaena maculosa), a small real cephalopod resting on dark wet reef stone. Natural compact mantle, eight distinct asymmetrical arms with delicate webbing only near their base, curled arms with rows of tiny recessed suckers, realistic dark intelligent eyes. Warm ochre, muted rust and brown camouflage with fine irregular chromatophore mottling. Scattered small oval blue rings with dark pigment outlines across the mantle and arms; most are subdued, a few catching an iridescent cobalt-cyan glint as a warning display begins. Physically plausible moist skin, soft directional underwater studio lighting, rich tactile detail, sharp focus on the animal, low-key charcoal background, restrained teal and aged-copper rim light, subtle distant hexagonal reflections inspired by an industrial cyberpunk badge. Entire octopus visible, centered subject, high-end natural history photography blended with premium creature concept art.",
+      "clip": ["4", 1]
+    }
+  },
+  "7": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "cartoon, mascot, toy, plush, vector, flat illustration, humanoid face, smile, eyebrows, big anime eyes, purple body, solid blue body, huge uniform neon circles, blue polka dots, symmetrical radial starburst arms, duplicated limbs, fused tentacles, more than eight arms, fewer than eight arms, extra eyes, extra head, mechanical armor, robot, cybernetic implants, hard shell, text, lettering, logo, watermark, cropped arms, cropped mantle, blurry, low detail, oversaturated, plastic skin",
+      "clip": ["4", 1]
+    }
+  },
+  "8": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": ["3", 0],
+      "vae": ["4", 2]
+    }
+  },
+  "9": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "Wigglefish_BlueRingOctopus",
+      "images": ["8", 0]
+    }
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "3": {
+    "class_type": "KSampler",
+    "inputs": {
+      "seed": 96114201,
+      "steps": 22,
+      "cfg": 5.4,
+      "sampler_name": "dpmpp_2m_sde",
+      "scheduler": "karras",
+      "denoise": 0.40,
+      "model": ["4", 0],
+      "positive": ["6", 0],
+      "negative": ["7", 0],
+      "latent_image": ["11", 0]
+    }
+  },
+  "4": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "RealVisXL_V4.0.safetensors"
+    }
+  },
+  "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "A new idle animation frame of this exact same blue-ringed octopus 3D cartoon character. Keep the same recognizable face, two eyes, russet and purple skin, scattered cobalt blue rings, dark teal lighting, studio background, camera, scale and composition. Change only the organic arm pose: the eight arms gently curl inward and lift at their tips as if slowly drifting in water, each arm remains separate with its suckers visible. Premium physically based 3D animated feature render, natural soft movement, consistent character model.",
+      "clip": ["4", 1]
+    }
+  },
+  "7": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "different character, changed face, changed eye placement, changed camera, new background, extra mantle, second animal, fewer or more than eight arms, merged arms, missing arms, duplicated arms, frozen straight arms, motion blur, photograph, flat illustration, text, watermark, logo",
+      "clip": ["4", 1]
+    }
+  },
+  "8": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": ["3", 0],
+      "vae": ["4", 2]
+    }
+  },
+  "9": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "Wigglefish_OctoMotion",
+      "images": ["8", 0]
+    }
+  },
+  "10": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "blue_ring_octopus_anim_source.png"
+    }
+  },
+  "11": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": ["10", 0],
+      "vae": ["4", 2]
+    }
+  }
+}

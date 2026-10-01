@@ -1,0 +1,64 @@
+{
+  "3": {
+    "class_type": "KSampler",
+    "inputs": {
+      "seed": 78341031,
+      "steps": 26,
+      "cfg": 6.5,
+      "sampler_name": "dpmpp_2m_sde",
+      "scheduler": "karras",
+      "denoise": 0.60,
+      "model": ["4", 0],
+      "positive": ["6", 0],
+      "negative": ["7", 0],
+      "latent_image": ["11", 0]
+    }
+  },
+  "4": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "RealVisXL_V4.0.safetensors"
+    }
+  },
+  "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "Edit this exact photograph while preserving its single blue-ringed octopus, eight-arm anatomy, pose, camera angle, reef rocks, dark background, and natural warm brown skin. Change the chromatophore markings only: the small irregular oval ring outlines scattered across the mantle and arms must be vivid iridescent cobalt blue with deep navy pigment edges and cyan-blue reflective highlights. (blue rings clearly visible across both mantle and arms:1.55). Keep each ring small, thin, natural, and integrated into the skin, not raised or jewelry-like. Preserve realistic wet skin texture and natural-history macro photography. Keep the animal one continuous creature with one mantle and two eyes.",
+      "clip": ["4", 1]
+    }
+  },
+  "7": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "yellow rings, orange rings, gold circles, white rings, cream spots, pale spots, beige spots, glowing white dots, giant polka dots, solid blue skin, multiple animals, second octopus, double head, extra mantle, extra or missing arms, merged arms, changed pose, cartoon, fantasy, robot, text, watermark, logo",
+      "clip": ["4", 1]
+    }
+  },
+  "8": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": ["3", 0],
+      "vae": ["4", 2]
+    }
+  },
+  "9": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "Wigglefish_BlueRingOctopus_ColorPass",
+      "images": ["8", 0]
+    }
+  },
+  "10": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "blue_ring_octopus_color_base.png"
+    }
+  },
+  "11": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": ["10", 0],
+      "vae": ["4", 2]
+    }
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "3": {
+    "class_type": "KSampler",
+    "inputs": {
+      "seed": 62025109,
+      "steps": 32,
+      "cfg": 6.2,
+      "sampler_name": "dpmpp_2m_sde",
+      "scheduler": "karras",
+      "denoise": 1.0,
+      "model": ["4", 0],
+      "positive": ["6", 0],
+      "negative": ["7", 0],
+      "latent_image": ["5", 0]
+    }
+  },
+  "4": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "RealVisXL_V4.0.safetensors"
+    }
+  },
+  "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
+    }
+  },
+  "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "A premium 3D animated-film character render of a blue-ringed octopus companion, sophisticated stylized realism rather than a photograph. One single compact octopus with one rounded mantle, two large expressive glassy eyes on the same head, a small beak, and exactly eight distinct naturally curling arms radiating from one central mouth. Clearly separated arm silhouettes with rows of tiny realistic suckers. Warm russet and ochre skin with soft mottled camouflage and scattered thin iridescent cobalt-blue rings on the mantle and arms. Sculpted skin with gentle subsurface scattering, fine pores, glossy wet highlights, rich soft shadows, beautiful handcrafted 3D surface detail. Clever curious expression, warm and appealing rather than scary or babyish. Full character visible, centered composition, dark charcoal studio/underwater environment, subtle teal edge light and aged-copper reflections, a restrained thin hexagonal light frame in the distant background, cinematic depth of field, high-end collectible character presentation, polished physically based rendering.",
+      "clip": ["4", 1]
+    }
+  },
+  "7": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "photograph, wildlife documentary, flat vector art, 2D drawing, paper cutout, plush toy, chibi, baby proportions, human face, human nose, human lips, smile with teeth, more or fewer than eight arms, duplicated arms, fused arms, second octopus, extra head, multiple mantles, turtle shell, hard shell, robotic armor, mechanical limbs, solid blue skin, huge white spots, oversized polka dots, text, letters, logo, watermark, cropped animal, cut off arms, blurry, low resolution",
+      "clip": ["4", 1]
+    }
+  },
+  "8": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": ["3", 0],
+      "vae": ["4", 2]
+    }
+  },
+  "9": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "Wigglefish_BlueRing_Octo3D",
+      "images": ["8", 0]
+    }
+  }
+}
