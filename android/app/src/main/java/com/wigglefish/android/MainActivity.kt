@@ -888,7 +888,11 @@ class MainActivity : AppCompatActivity() {
     private fun showThemePickerDialog() {
         val themes = AppTheme.values()
         val names = (themes.map { it.title } +
-            "Motion / ${if (ComicMotion.enabled(this)) "ON - tap for reduced motion" else "OFF - tap to animate"}").toTypedArray()
+            "Motion / ${when {
+                !ComicMotion.requested(this) -> "OFF - tap to animate"
+                ComicMotion.disabledReason(this) != null -> "Android animations disabled"
+                else -> "ON - tap for reduced motion"
+            }}").toTypedArray()
         val density = resources.displayMetrics.density
         val paintRows = object : ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, names) {
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
@@ -914,9 +918,16 @@ class MainActivity : AppCompatActivity() {
                     applyTheme(selected)
                     Toast.makeText(this, "Fresh paint: ${selected.title}", Toast.LENGTH_SHORT).show()
                 } else {
-                    ComicMotion.setEnabled(this, !ComicMotion.enabled(this))
+                    val systemDisabled = ComicMotion.requested(this) && !ComicMotion.enabled(this)
+                    if (!systemDisabled) ComicMotion.setEnabled(this, !ComicMotion.requested(this))
                     eventUi.refreshMotion()
-                    Toast.makeText(this, if (ComicMotion.enabled(this)) "Comic motion on" else "Reduced motion on", Toast.LENGTH_SHORT).show()
+                    val message = when {
+                        ComicMotion.requested(this) && !ComicMotion.enabled(this) ->
+                            "Enable animations in Android settings (Remove animations or Animator duration scale)."
+                        ComicMotion.enabled(this) -> "Comic motion on"
+                        else -> "Reduced motion on"
+                    }
+                    Toast.makeText(this, message, Toast.LENGTH_LONG).show()
                 }
             }
             .setNegativeButton("Back to the show", null)
@@ -1166,6 +1177,11 @@ class MainActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         if (::toolsController.isInitialized) startToolStatusTicker()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (::eventUi.isInitialized) eventUi.refreshMotion()
     }
 
     override fun onStop() {

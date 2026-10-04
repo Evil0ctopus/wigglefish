@@ -54,6 +54,11 @@ run at approximately 30 fps only while visible and stop offscreen or in the
 background. Hero celebrations end after 700 ms; there is no animated wallpaper.
 Signal rows remain recycled, and repeated unchanged button updates reuse their
 paintwork. The radar is a stylized **signal mix, not a location map**.
+The radar and Lumi restart their visible animation loops on window visibility
+changes, and motion is refreshed when the activity resumes. If the sweep is
+paused deliberately, the radar shows **PAUSED** with either the Paint motion
+setting or **ANDROID ANIMATIONS OFF**. The Paint menu reports Android-disabled
+animations separately instead of claiming its toggle can override system settings.
 
 ### Emulator verification (no phone required)
 

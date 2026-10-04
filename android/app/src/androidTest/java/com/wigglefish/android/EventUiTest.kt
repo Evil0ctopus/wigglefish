@@ -133,6 +133,14 @@ class EventUiTest {
                 list.setSelection(999)
             }
             InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+            val layoutDeadline = android.os.SystemClock.uptimeMillis() + 3000
+            var laidOut = false
+            while (!laidOut && android.os.SystemClock.uptimeMillis() < layoutDeadline) {
+                scenario.onActivity { activity ->
+                    laidOut = activity.findViewById<ListView>(R.id.signalList).lastVisiblePosition == 999
+                }
+                if (!laidOut) Thread.sleep(30)
+            }
             scenario.onActivity { activity ->
                 val list = activity.findViewById<ListView>(R.id.signalList)
                 assertEquals(999, list.lastVisiblePosition)
@@ -143,6 +151,14 @@ class EventUiTest {
                 list.setSelection(0)
             }
             InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+            laidOut = false
+            val topDeadline = android.os.SystemClock.uptimeMillis() + 3000
+            while (!laidOut && android.os.SystemClock.uptimeMillis() < topDeadline) {
+                scenario.onActivity { activity ->
+                    laidOut = activity.findViewById<ListView>(R.id.signalList).firstVisiblePosition == 0
+                }
+                if (!laidOut) Thread.sleep(30)
+            }
             scenario.onActivity { activity ->
                 val list = activity.findViewById<ListView>(R.id.signalList)
                 val adapter = list.adapter as SignalListAdapter
@@ -371,6 +387,34 @@ class EventUiTest {
                 val findings = activity.findViewById<TextView>(R.id.intelTopFindingsText)
                 assertTrue("All findings text must fit",
                     findings.layout.height <= findings.height - findings.compoundPaddingTop - findings.compoundPaddingBottom)
+            }
+        }
+    }
+
+    @Test
+    fun radarRestartsOnWindowVisibilityCallbackWithoutTabChange() {
+        val angle = SignalRadarView::class.java.getDeclaredField("sweepAngle").apply { isAccessible = true }
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            lateinit var radar: SignalRadarView
+            var before = 0f
+            scenario.onActivity { activity ->
+                activity.findViewById<Button>(R.id.tabRadarBtn).performClick()
+                radar = activity.findViewById(R.id.radarView)
+                ComicMotion.setEnabled(activity, false)
+                radar.refreshMotion()
+                assertFalse(ComicMotion.enabled(activity))
+                before = angle.getFloat(radar)
+            }
+            Thread.sleep(300)
+            scenario.onActivity { activity ->
+                assertEquals(before, angle.getFloat(radar), 0f)
+                ComicMotion.setEnabled(activity, true)
+                radar.dispatchWindowVisibilityChanged(View.VISIBLE)
+            }
+            Thread.sleep(300)
+            scenario.onActivity { activity ->
+                assertTrue(ComicMotion.enabled(activity))
+                assertNotEquals(before, angle.getFloat(radar))
             }
         }
     }

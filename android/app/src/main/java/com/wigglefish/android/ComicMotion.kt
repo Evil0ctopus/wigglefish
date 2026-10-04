@@ -7,9 +7,17 @@ import android.view.animation.OvershootInterpolator
 
 object ComicMotion {
     private const val KEY = "comic_motion"
-    fun enabled(context: Context): Boolean =
+    fun requested(context: Context): Boolean =
         context.getSharedPreferences("wigglefish_prefs", Context.MODE_PRIVATE)
-            .getBoolean(KEY, true) && ValueAnimator.areAnimatorsEnabled()
+            .getBoolean(KEY, true)
+
+    fun enabled(context: Context): Boolean = requested(context) && ValueAnimator.areAnimatorsEnabled()
+
+    fun disabledReason(context: Context): String? = when {
+        !requested(context) -> "REDUCED MOTION / PAINT > MOTION"
+        !ValueAnimator.areAnimatorsEnabled() -> "ANDROID ANIMATIONS OFF"
+        else -> null
+    }
 
     fun setEnabled(context: Context, enabled: Boolean) {
         context.getSharedPreferences("wigglefish_prefs", Context.MODE_PRIVATE)

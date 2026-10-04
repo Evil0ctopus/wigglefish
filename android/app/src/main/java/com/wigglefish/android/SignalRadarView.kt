@@ -59,6 +59,16 @@ class SignalRadarView @JvmOverloads constructor(
         refreshMotion()
     }
 
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        refreshMotion()
+    }
+
+    override fun onWindowVisibilityChanged(visibility: Int) {
+        super.onWindowVisibilityChanged(visibility)
+        refreshMotion()
+    }
+
     override fun onDetachedFromWindow() {
         removeCallbacks(animationTicker)
         super.onDetachedFromWindow()
@@ -163,12 +173,13 @@ class SignalRadarView @JvmOverloads constructor(
         paint.typeface = comicTypeface
         paint.textSize = 11f
         paint.textAlign = Paint.Align.LEFT
-        canvas.drawText("PING!", -143f, -65f, paint)
+        canvas.drawText(if (ComicMotion.enabled(context)) "PING!" else "PAUSED", -143f, -65f, paint)
         paint.textAlign = Paint.Align.RIGHT
         canvas.drawText("${channelHeat.size} CHANNELS", 146f, -96f, paint)
         paint.textAlign = Paint.Align.CENTER
         paint.textSize = 10f
-        canvas.drawText(targetRssi?.let { "LOCKED / $it dBm" } ?: "SIGNAL MIX / NOT A MAP", 0f, 114f, paint)
+        canvas.drawText(ComicMotion.disabledReason(context) ?:
+            targetRssi?.let { "LOCKED / $it dBm" } ?: "SIGNAL MIX / NOT A MAP", 0f, 114f, paint)
         canvas.restore()
     }
 }

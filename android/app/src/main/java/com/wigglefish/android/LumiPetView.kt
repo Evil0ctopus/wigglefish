@@ -105,6 +105,11 @@ class LumiPetView @JvmOverloads constructor(
         refreshMotion()
     }
 
+    override fun onWindowVisibilityChanged(visibility: Int) {
+        super.onWindowVisibilityChanged(visibility)
+        refreshMotion()
+    }
+
     override fun onDetachedFromWindow() {
         removeCallbacks(animationTicker)
         sparks.clear()
