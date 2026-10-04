@@ -21,6 +21,16 @@ The compatibility parsers normalize supported survey metadata formats. Legacy po
 
 ## Event UI
 
+The website distributes this debug-signed comic UI as an experimental
+**nightly build**, which may still contain bugs. Install from the
+[Android section of the flash hub](https://evil0ctopus.github.io/flash.html#wigglefish-android):
+download the APK on an Android 8.0+ phone, open it, allow installation from the
+browser/file manager if prompted, and confirm Android's install dialog.
+This does not flash board firmware or require USB debugging. The nightly uses
+`com.wigglefish.android.lumitest`, separate from the regular app. The October 4,
+2026 build's radar sweep was verified on a Samsung phone with **Paint > Motion**
+enabled; this limited smoke test does not certify all features as bug-free.
+
 The controller uses five fixed bottom destinations: **Discover**, **Radar**,
 **Tools**, **Insights**, and **Save**. Signal results are recycled native list
 rows with readable names, signal strength, and text risk labels. Tap a row for
