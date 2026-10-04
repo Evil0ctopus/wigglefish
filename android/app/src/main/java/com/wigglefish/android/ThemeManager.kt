@@ -3,7 +3,7 @@ package com.wigglefish.android
 import android.content.Context
 import android.graphics.Color
 
-/** Visual palettes based on Wigglefish's dark metal, teal, amethyst, and copper identity. */
+/** Stable preference names with original comic custom-paint palettes. */
 enum class AppTheme(
     val title: String,
     val background: Int,
@@ -17,52 +17,52 @@ enum class AppTheme(
     val textSecondary: Int
 ) {
     KOHOLINT_TOYBOX(
-        title = "🐙 EVIL OCTOPUS",
-        background = Color.parseColor("#080A0F"),
-        surface = Color.parseColor("#11151D"),
-        cardBackground = Color.parseColor("#191D27"),
-        cardBorder = Color.parseColor("#3B5360"),
-        primaryAccent = Color.parseColor("#40E8D0"),
-        secondaryAccent = Color.parseColor("#C77BDB"),
-        tertiaryAccent = Color.parseColor("#D39A72"),
-        textPrimary = Color.parseColor("#F3F1F7"),
-        textSecondary = Color.parseColor("#A9B1BF")
+        title = "TURBO POP / cyan + hot pink",
+        background = Color.parseColor("#FFF5DE"),
+        surface = Color.parseColor("#FFFAED"),
+        cardBackground = Color.parseColor("#FFFEF8"),
+        cardBorder = ComicInk.black,
+        primaryAccent = Color.parseColor("#42DFE8"),
+        secondaryAccent = Color.parseColor("#FF83B5"),
+        tertiaryAccent = Color.parseColor("#FFD447"),
+        textPrimary = ComicInk.black,
+        textSecondary = ComicInk.muted
     ),
     MARIN_SUNSET(
-        title = "💜 AMETHYST CIRCUIT",
-        background = Color.parseColor("#0D0A12"),
-        surface = Color.parseColor("#19131F"),
-        cardBackground = Color.parseColor("#211A2A"),
-        cardBorder = Color.parseColor("#654C72"),
-        primaryAccent = Color.parseColor("#D079E4"),
-        secondaryAccent = Color.parseColor("#40D6C2"),
-        tertiaryAccent = Color.parseColor("#D8A37A"),
-        textPrimary = Color.parseColor("#F6F0F8"),
-        textSecondary = Color.parseColor("#BEB0C4")
+        title = "CANDY DRIFT / lilac + mint",
+        background = Color.parseColor("#F5EDFF"),
+        surface = Color.parseColor("#FFF8FF"),
+        cardBackground = Color.parseColor("#FFFAFF"),
+        cardBorder = ComicInk.black,
+        primaryAccent = Color.parseColor("#C5ABFF"),
+        secondaryAccent = Color.parseColor("#66E3C2"),
+        tertiaryAccent = Color.parseColor("#FFCE72"),
+        textPrimary = ComicInk.black,
+        textSecondary = ComicInk.muted
     ),
     WIND_FISH_DREAM(
-        title = "🟢 TEAL SIGNAL",
-        background = Color.parseColor("#070D10"),
-        surface = Color.parseColor("#101B1D"),
-        cardBackground = Color.parseColor("#172426"),
-        cardBorder = Color.parseColor("#356C67"),
-        primaryAccent = Color.parseColor("#53E4CE"),
-        secondaryAccent = Color.parseColor("#B870D0"),
-        tertiaryAccent = Color.parseColor("#D4A26F"),
-        textPrimary = Color.parseColor("#F0F6F5"),
-        textSecondary = Color.parseColor("#A7BFBC")
+        title = "REEF RACER / lime + blue",
+        background = Color.parseColor("#F0F8DF"),
+        surface = Color.parseColor("#FCFFEE"),
+        cardBackground = Color.parseColor("#FDFFF7"),
+        cardBorder = ComicInk.black,
+        primaryAccent = Color.parseColor("#B6ED57"),
+        secondaryAccent = Color.parseColor("#86C8FF"),
+        tertiaryAccent = Color.parseColor("#FFCF66"),
+        textPrimary = ComicInk.black,
+        textSecondary = ComicInk.muted
     ),
     DUNGEON_GUARDIAN(
-        title = "🟤 COPPER CORE",
-        background = Color.parseColor("#0D0B0A"),
-        surface = Color.parseColor("#1B1714"),
-        cardBackground = Color.parseColor("#25201C"),
-        cardBorder = Color.parseColor("#795B46"),
-        primaryAccent = Color.parseColor("#D7A078"),
-        secondaryAccent = Color.parseColor("#56D9C3"),
-        tertiaryAccent = Color.parseColor("#C276D4"),
-        textPrimary = Color.parseColor("#F4F0EC"),
-        textSecondary = Color.parseColor("#B8AAA0")
+        title = "SUNSET STRIPE / orange + sky",
+        background = Color.parseColor("#FFF0E5"),
+        surface = Color.parseColor("#FFF9EF"),
+        cardBackground = Color.parseColor("#FFFCF4"),
+        cardBorder = ComicInk.black,
+        primaryAccent = Color.parseColor("#FFB06B"),
+        secondaryAccent = Color.parseColor("#80D8ED"),
+        tertiaryAccent = Color.parseColor("#FFE26A"),
+        textPrimary = ComicInk.black,
+        textSecondary = ComicInk.muted
     );
 
     companion object {
@@ -84,4 +84,3 @@ enum class AppTheme(
         }
     }
 }
-

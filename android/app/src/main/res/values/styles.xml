@@ -1,10 +1,12 @@
 <resources>
-    <style name="Theme.Wigglefish" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Theme.Wigglefish" parent="Theme.Material3.Light.NoActionBar">
         <item name="android:fontFamily">sans-serif-medium</item>
-        <item name="android:colorAccent">#40E8D0</item>
-        <item name="android:navigationBarColor">#080A0F</item>
-        <item name="android:statusBarColor">#080A0F</item>
-        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:colorAccent">#181821</item>
+        <item name="colorPrimary">#181821</item>
+        <item name="colorOnPrimary">#FFFAED</item>
+        <item name="android:windowBackground">#FFF5DE</item>
+        <item name="android:navigationBarColor">#FFFAED</item>
+        <item name="android:statusBarColor">#FFFAED</item>
+        <item name="android:windowLightStatusBar">true</item>
     </style>
 </resources>
-

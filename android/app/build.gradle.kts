@@ -2,19 +2,26 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.serialization") version "2.0.0"
-    id("org.jetbrains.kotlin.plugin.compose") version "2.0.0"
+    id("org.jetbrains.kotlin.plugin.compose") version "2.0.21"
 }
 
 android {
     namespace = "com.wigglefish.android"
     compileSdk = 35
 
+    buildTypes {
+        getByName("debug") {
+            applicationIdSuffix = ".lumitest"
+        }
+    }
+
     defaultConfig {
         applicationId = "com.wigglefish.android"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
+        versionCode = 5
         versionName = "0.1.0"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildFeatures {
@@ -36,6 +43,9 @@ kotlin {
 }
 
 dependencies {
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test:core:1.6.1")
+    androidTestImplementation("androidx.test:runner:1.6.2")
     // Core Android
     implementation("androidx.core:core-ktx:1.15.0")
     implementation("androidx.appcompat:appcompat:1.7.0")

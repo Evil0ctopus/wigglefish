@@ -23,6 +23,8 @@ class WirelessToolsController(
     private val context: Context,
     private val serial: UsbSerialController,
     private val packetAnalyzer: PacketAnalyzer,
+    private val writeSmartLightColor: (Int, Int, Int) -> Boolean,
+    private val writeSmartLightPower: (Boolean) -> Boolean,
     private val onStatusUpdate: (String) -> Unit
 ) {
 
@@ -32,8 +34,8 @@ class WirelessToolsController(
         val geigerTarget: String?,
         val activeHuntBssid: String?,
         val activeHuntChannel: Int,
-        val isEvilPortalActive: Boolean,
-        val evilPortalSsid: String,
+        val isCaptivePortalDemoActive: Boolean,
+        val captivePortalSsid: String,
         val isProbeFloodActive: Boolean,
         val isSmartLightAnimationActive: Boolean,
         val smartLightMode: SmartLightMode,
@@ -44,7 +46,6 @@ class WirelessToolsController(
         val probeFramesSent: Long,
         val rawWifiFramesObserved: Long,
         val smartLightCommandsSent: Long,
-        val harvestedCredentialCount: Int,
         val lastEvent: String,
         val lastEventAt: Long,
     )
@@ -58,7 +59,7 @@ class WirelessToolsController(
     }
 
     enum class SmartLightMode {
-        OFF, LAST_COMMAND, RAINBOW, STROBE
+        OFF, LAST_COMMAND, RAINBOW
     }
 
     private val executor = Executors.newScheduledThreadPool(2)
@@ -102,19 +103,11 @@ class WirelessToolsController(
         private set
     @Volatile var activeHuntChannel: Int = 1
 
-    // Evil Portal state
-    @Volatile var isEvilPortalActive = false
+    // Captive portal demo state
+    @Volatile var isCaptivePortalDemoActive = false
         private set
-    @Volatile var evilPortalSsid = "Free-WiFi"
+    @Volatile var captivePortalSsid = "Wigglefish-Lab"
         private set
-    data class HarvestedCredential(
-        val ssid: String,
-        val template: String,
-        val username: String,
-        val password: String,
-        val timestamp: Long = System.currentTimeMillis()
-    )
-    val harvestedCredentials = mutableListOf<HarvestedCredential>()
 
     // Probe Flooder state
     @Volatile var isProbeFloodActive = false
@@ -171,8 +164,8 @@ class WirelessToolsController(
         geigerTarget = geigerTarget,
         activeHuntBssid = activeHuntBssid,
         activeHuntChannel = activeHuntChannel,
-        isEvilPortalActive = isEvilPortalActive,
-        evilPortalSsid = evilPortalSsid,
+        isCaptivePortalDemoActive = isCaptivePortalDemoActive,
+        captivePortalSsid = captivePortalSsid,
         isProbeFloodActive = isProbeFloodActive,
         isSmartLightAnimationActive = lightAnimTask != null,
         smartLightMode = smartLightMode,
@@ -183,7 +176,6 @@ class WirelessToolsController(
         probeFramesSent = probeFramesSent,
         rawWifiFramesObserved = rawWifiFramesObserved,
         smartLightCommandsSent = smartLightCommandsSent,
-        harvestedCredentialCount = synchronized(harvestedCredentials) { harvestedCredentials.size },
         lastEvent = lastEvent,
         lastEventAt = lastEventAt,
     )
@@ -453,7 +445,7 @@ class WirelessToolsController(
     }
 
     // -------------------------------------------------------------
-    // Smart RGB Light & Bulb Hijacker (Triones, Lotus, Elk-BLEDOM, MagicHome)
+    // Smart RGB Light commands are delegated to the explicitly selected BLE light.
     // -------------------------------------------------------------
 
     fun sendSmartLightColor(r: Int, g: Int, b: Int) {
@@ -466,42 +458,13 @@ class WirelessToolsController(
             smartLightMode = SmartLightMode.LAST_COMMAND
         }
         executor.execute {
-            try {
-                // 1. Broadcast Triones / Lotus Lantern / Elk-BLEDOM command payloads
-                val lotusBytes = RadioProtocols.createLotusLanternRgb(r, g, b)
-                val elkBytes = RadioProtocols.createElkBledomRgb(r, g, b)
-                val trionesBytes = RadioProtocols.createTrionesRgb(r, g, b)
-
-                // Dispatch raw BLE advertisement packets with light control payloads
-                serial.send("{\"cmd\":\"ble_adv_raw\",\"payload_hex\":\"${RadioProtocols.bytesToHex(lotusBytes)}\"}")
-                Thread.sleep(30)
-                serial.send("{\"cmd\":\"ble_adv_raw\",\"payload_hex\":\"${RadioProtocols.bytesToHex(elkBytes)}\"}")
-                Thread.sleep(30)
-                serial.send("{\"cmd\":\"ble_adv_raw\",\"payload_hex\":\"${RadioProtocols.bytesToHex(trionesBytes)}\"}")
-                smartLightCommandsSent += 3
-
-                // 2. Transmit MagicHome Wi-Fi UDP packet to 255.255.255.255:5577
-                val magicHomeBytes = RadioProtocols.createMagicHomeUdpRgb(r, g, b)
-                try {
-                    val socket = java.net.DatagramSocket()
-                    socket.broadcast = true
-                    val packet = java.net.DatagramPacket(
-                        magicHomeBytes,
-                        magicHomeBytes.size,
-                        java.net.InetAddress.getByName("255.255.255.255"),
-                        5577
-                    )
-                    socket.send(packet)
-                    socket.close()
-                } catch (_: Exception) {}
-
+            if (writeSmartLightColor(r, g, b)) {
+                smartLightCommandsSent++
                 if (publishEachFrame) {
                     mainHandler.post {
-                        publishStatus("RGB Light Color sent (RGB: $r, $g, $b)")
+                        publishStatus("RGB command queued for the selected light")
                     }
                 }
-            } catch (e: Exception) {
-                mainHandler.post { publishStatus("Smart Light error: ${e.message}") }
             }
         }
     }
@@ -510,36 +473,19 @@ class WirelessToolsController(
         stopSmartLightAnimInternal()
         smartLightMode = SmartLightMode.LAST_COMMAND
         executor.execute {
-            try {
-                val pwrBytes = RadioProtocols.createSmartLightPower(on)
-                serial.send("{\"cmd\":\"ble_adv_raw\",\"payload_hex\":\"${RadioProtocols.bytesToHex(pwrBytes)}\"}")
+            if (writeSmartLightPower(on)) {
                 smartLightCommandsSent++
                 mainHandler.post {
-                    publishStatus("Smart Light Power: ${if (on) "ON" else "OFF"}")
+                    publishStatus("Selected light power ${if (on) "ON" else "OFF"} command queued")
                 }
-            } catch (_: Exception) {}
-        }
-    }
-
-    fun startSmartLightStrobe() {
-        stopSmartLightAnimInternal()
-        smartLightMode = SmartLightMode.STROBE
-        publishStatus("Smart Light Strobe active")
-        var toggle = false
-        lightAnimTask = executor.scheduleWithFixedDelay({
-            toggle = !toggle
-            if (toggle) {
-                dispatchSmartLightColor(255, 0, 0, stopAnimation = false, publishEachFrame = false)
-            } else {
-                dispatchSmartLightColor(0, 0, 255, stopAnimation = false, publishEachFrame = false)
             }
-        }, 0, 150, TimeUnit.MILLISECONDS)
+        }
     }
 
     fun startSmartLightRainbow() {
         stopSmartLightAnimInternal()
         smartLightMode = SmartLightMode.RAINBOW
-        publishStatus("Smart Light Rainbow cycle active")
+        publishStatus("Slow RGB cycle active for the selected light")
         var hue = 0f
         lightAnimTask = executor.scheduleWithFixedDelay({
             hue = (hue + 25f) % 360f
@@ -548,7 +494,7 @@ class WirelessToolsController(
             val g = (rgbColor shr 8) and 0xFF
             val b = rgbColor and 0xFF
             dispatchSmartLightColor(r, g, b, stopAnimation = false, publishEachFrame = false)
-        }, 0, 120, TimeUnit.MILLISECONDS)
+        }, 0, 900, TimeUnit.MILLISECONDS)
     }
 
     fun stopSmartLightAnim() {
@@ -559,7 +505,7 @@ class WirelessToolsController(
     private fun stopSmartLightAnimInternal() {
         lightAnimTask?.cancel(true)
         lightAnimTask = null
-        if (smartLightMode == SmartLightMode.RAINBOW || smartLightMode == SmartLightMode.STROBE) {
+        if (smartLightMode == SmartLightMode.RAINBOW) {
             smartLightMode = SmartLightMode.OFF
         }
     }
@@ -570,40 +516,44 @@ class WirelessToolsController(
         stopHandshakeHunt()
         stopSmartLightAnimInternal()
         stopProbeFlood()
-        stopEvilPortal()
+        stopCaptivePortalDemo()
         stopPcapCapture()
         setGeigerTarget(null)
         publishStatus("All tools stopped")
     }
 
     // -------------------------------------------------------------
-    // Evil Captive Portal (Phishing & Credential Harvest)
+    // Transparent captive portal demonstration; no credentials are requested or stored.
     // -------------------------------------------------------------
 
-    fun startEvilPortal(ssid: String = "Free-WiFi", template: String = "router") {
-        isEvilPortalActive = true
-        evilPortalSsid = ssid
+    fun startCaptivePortalDemo(ssid: String = "Wigglefish-Lab"): Boolean {
         val cmd = JSONObject().apply {
             put("cmd", "portal_start")
             put("ssid", ssid)
-            put("template", template)
         }
-        serial.send(cmd.toString())
-        publishStatus("Evil Captive Portal started on SSID '$ssid' [Template: $template]")
+        if (!serial.send(cmd.toString())) {
+            publishStatus("Could not send the captive portal demo command; connect the ESP32 first")
+            return false
+        }
+        isCaptivePortalDemoActive = true
+        captivePortalSsid = ssid
+        publishStatus("Captive portal demo started on '$ssid'; credential capture is disabled")
+        return true
     }
 
-    fun stopEvilPortal() {
-        isEvilPortalActive = false
+    fun stopCaptivePortalDemo() {
         val cmd = JSONObject().apply { put("cmd", "portal_stop") }
-        serial.send(cmd.toString())
-        publishStatus("Evil Captive Portal stopped")
+        if (!serial.send(cmd.toString())) {
+            publishStatus("Could not send the portal stop command; the ESP32 may still be running the demo")
+            return
+        }
+        isCaptivePortalDemoActive = false
+        publishStatus("Captive portal demo stopped")
     }
 
-    fun addHarvestedCredential(cred: HarvestedCredential) {
-        synchronized(harvestedCredentials) {
-            harvestedCredentials.add(cred)
-        }
-        publishStatus("Credential harvested from ${cred.ssid}: ${cred.username.ifEmpty { "password submitted" }}")
+    fun onCaptivePortalDemoFailed(reason: String) {
+        isCaptivePortalDemoActive = false
+        publishStatus(reason)
     }
 
     // -------------------------------------------------------------
@@ -653,7 +603,7 @@ class WirelessToolsController(
         stopHandshakeHunt()
         stopSmartLightAnim()
         stopProbeFlood()
-        stopEvilPortal()
+        stopCaptivePortalDemo()
         stopPcapCapture()
         toneGenerator?.release()
         executor.shutdownNow()

@@ -6,13 +6,6 @@
     android:layout_height="match_parent"
     android:background="#080A0F">
 
-    <!-- 3D Clay Cartoon Matrix Digital Rain Background -->
-    <com.wigglefish.android.MatrixRainView
-        android:id="@+id/matrixBackground"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:alpha="0.14" />
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -39,9 +32,9 @@
                     android:layout_width="34dp"
                     android:layout_height="34dp"
                     android:layout_marginEnd="6dp"
-                    android:contentDescription="Blue-ringed octopus emblem"
+                    android:contentDescription="Lumi, the signal manta"
                     android:scaleType="fitCenter"
-                    android:src="@drawable/blue_ring_octopus_emblem" />
+                    android:src="@drawable/lumi_manta" />
 
                 <TextView
                     android:id="@+id/appTitleText"
@@ -86,7 +79,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="EVIL OCTOPUS  /  CODE. CRAFT. CONQUER."
+                android:text="AQUATIC SIGNAL SCOUT  /  CODE. CRAFT. CONQUER."
                 android:textColor="#D39A72"
                 android:textSize="8sp"
                 android:fontFamily="monospace" />
@@ -428,21 +421,24 @@
                     android:background="@drawable/card_3d_surface"
                     android:padding="12dp">
 
-                    <ScrollView
+                    <ListView
+                        android:id="@+id/signalList"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:scrollbars="vertical">
+                        android:divider="@android:color/transparent"
+                        android:dividerHeight="8dp"
+                        android:clipToPadding="false"
+                        android:scrollbars="vertical" />
 
                         <TextView
                             android:id="@+id/resultsText"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:fontFamily="monospace"
-                            android:lineSpacingExtra="6dp"
-                            android:text="Scanning 2.4GHz + 5GHz dual-band airspace..."
+                            android:gravity="center"
+                            android:padding="24dp"
+                            android:text="Ready to explore\n\nNearby Wi-Fi and Bluetooth signals will appear here.\nConnect a board for USB survey data."
                             android:textColor="#D6D9FF"
-                            android:textSize="11.5sp" />
-                    </ScrollView>
+                            android:textSize="15sp" />
                 </FrameLayout>
             </LinearLayout>
 
@@ -1299,7 +1295,7 @@
                         </LinearLayout>
                     </LinearLayout>
 
-                    <!-- Tool 4: Smart RGB Light Hijacker -->
+                    <!-- Tool 4: Smart RGB Light Controller -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -1311,7 +1307,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="💡 SMART RGB LIGHT &amp; BULB HIJACKER"
+                            android:text="💡 MY SMART RGB LIGHT"
                             android:textColor="#40E8D0"
                             android:textSize="13sp"
                             android:textStyle="bold" />
@@ -1320,7 +1316,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="Remotely override nearby BLE &amp; Wi-Fi LED strips (Triones, Lotus, Elk-BLEDOM, MagicHome)."
+                            android:text="Find a compatible BLE light, choose one you own, then connect directly. Controls never broadcast to nearby lights."
                             android:textColor="#A0A8CC"
                             android:textSize="11sp" />
 
@@ -1331,10 +1327,44 @@
                             android:layout_marginTop="6dp"
                             android:background="#22000000"
                             android:padding="7dp"
-                            android:text="Mode OFF | Commands 0 | One-shot colors available"
+                            android:text="No light selected | Find your light to begin"
                             android:textColor="#A9B1BF"
                             android:textSize="10sp"
                             android:fontFamily="monospace" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:orientation="horizontal">
+
+                            <Button
+                                android:id="@+id/toolLightDiscoverBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="42dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:text="🔎 FIND MY LIGHT"
+                                android:textSize="10.5sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000"
+                                android:background="@drawable/btn_3d_cyan" />
+
+                            <Button
+                                android:id="@+id/toolLightDisconnectBtn"
+                                android:layout_width="0dp"
+                                android:layout_height="42dp"
+                                android:layout_marginStart="8dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:gravity="center"
+                                android:text="DISCONNECT"
+                                android:textSize="10.5sp"
+                                android:textStyle="bold"
+                                android:textColor="#FFFFFF"
+                                android:background="@drawable/btn_3d_dark" />
+                        </LinearLayout>
 
                         <!-- Power Controls -->
                         <LinearLayout
@@ -1451,14 +1481,14 @@
                                 android:minWidth="0dp"
                                 android:gravity="center"
                                 android:paddingHorizontal="4dp"
-                                android:text="🌈 RAINBOW CYCLE"
+                                android:text="🌈 SLOW COLOR CYCLE"
                                 android:textSize="10.5sp"
                                 android:textStyle="bold"
                                 android:textColor="#000000"
                                 android:background="@drawable/btn_3d_amber" />
 
                             <Button
-                                android:id="@+id/toolLightStrobeBtn"
+                                android:id="@+id/toolLightStopAnimationBtn"
                                 android:layout_width="0dp"
                                 android:layout_height="40dp"
                                 android:layout_marginStart="8dp"
@@ -1466,15 +1496,15 @@
                                 android:minWidth="0dp"
                                 android:gravity="center"
                                 android:paddingHorizontal="4dp"
-                                android:text="⚡ STROBE OVERRIDE"
+                                android:text="⏹ STOP ANIMATION"
                                 android:textSize="10.5sp"
                                 android:textStyle="bold"
-                                android:textColor="#000000"
-                                android:background="@drawable/btn_3d_pink" />
+                                android:textColor="#FFFFFF"
+                                android:background="@drawable/btn_3d_dark" />
                         </LinearLayout>
                     </LinearLayout>
 
-                    <!-- Tool 5: Evil Captive Portal -->
+                    <!-- Tool 5: Captive Portal Demo -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -1487,7 +1517,7 @@
                             android:id="@+id/portalStatusText"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="🕸️ EVIL CAPTIVE PORTAL: [INACTIVE]"
+                            android:text="🫧 CAPTIVE PORTAL DEMO: [INACTIVE]"
                             android:textColor="#C77BDB"
                             android:textSize="13sp"
                             android:textStyle="bold" />
@@ -1496,7 +1526,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="Spins up Rogue AP + DNS Catch-All + Phishing Portal to harvest passwords."
+                            android:text="Creates a clearly labeled lab AP and demo landing page. It never asks for or stores credentials."
                             android:textColor="#A0A8CC"
                             android:textSize="11sp" />
 
@@ -1507,7 +1537,7 @@
                             android:layout_marginTop="6dp"
                             android:background="#22000000"
                             android:padding="7dp"
-                            android:text="SSID none | Credentials 0 | Arm required"
+                            android:text="SSID none | No credential capture | Arm required"
                             android:textColor="#A9B1BF"
                             android:textSize="10sp"
                             android:fontFamily="monospace" />
@@ -1526,7 +1556,7 @@
                                 android:minWidth="0dp"
                                 android:gravity="center"
                                 android:paddingHorizontal="4dp"
-                                android:text="🕸️ LAUNCH PORTAL"
+                                android:text="🫧 LAUNCH DEMO"
                                 android:textSize="11sp"
                                 android:textStyle="bold"
                                 android:textColor="#000000"
@@ -1548,17 +1578,6 @@
                                 android:background="@drawable/btn_3d_dark" />
                         </LinearLayout>
 
-                        <Button
-                            android:id="@+id/toolPortalViewCredsBtn"
-                            android:layout_width="match_parent"
-                            android:layout_height="42dp"
-                            android:layout_marginTop="8dp"
-                            android:gravity="center"
-                            android:text="🔑 HARVESTED CREDENTIALS (0)"
-                            android:textSize="11sp"
-                            android:textStyle="bold"
-                            android:textColor="#000000"
-                            android:background="@drawable/btn_3d_amber" />
                     </LinearLayout>
 
                     <!-- Tool 6: Probe Flooder & Recon Suite -->
@@ -2077,7 +2096,7 @@
                 android:layout_height="144dp"
                 android:background="@drawable/card_3d_surface">
 
-                <com.wigglefish.android.CopilotOctopusAnimationView
+                <com.wigglefish.android.LumiPetView
                     android:id="@+id/wigglePetView"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent" />
@@ -2102,7 +2121,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="🐙 OCTO LVL 1 (Signal Sprout)"
+                        android:text="✦ LUMI LVL 1 (Signal Sprout)"
                         android:textColor="#40E8D0"
                         android:textSize="12sp"
                         android:textStyle="bold"

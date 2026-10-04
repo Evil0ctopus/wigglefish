@@ -1,5 +1,6 @@
 package com.wigglefish.android
 
+import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -26,6 +27,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.ListView
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
@@ -35,6 +37,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -45,6 +48,7 @@ import org.json.JSONObject
 class MainActivity : AppCompatActivity() {
     companion object {
         private const val permissionAction = "com.wigglefish.android.USB_PERMISSION"
+        private const val lightPermissionRequest = 43
     }
 
     // Header & Badges
@@ -81,6 +85,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var filterBleBtn: Button
     private lateinit var filterVulnBtn: Button
     private lateinit var resultsText: TextView
+    private lateinit var signalListAdapter: SignalListAdapter
+    private lateinit var eventUi: EventUiShell
 
     // Radar & Hunter section views
     private lateinit var radarView: SignalRadarView
@@ -122,7 +128,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var toolArmBtn: Button
     private lateinit var toolPcapToggleBtn: Button
     private lateinit var toolStopAllBtn: Button
-    private lateinit var toolPortalViewCredsBtn: Button
     private lateinit var toolViewStationsBtn: Button
     private lateinit var toolViewSkimmersBtn: Button
     private lateinit var toolViewWpsPmfBtn: Button
@@ -137,7 +142,7 @@ class MainActivity : AppCompatActivity() {
 
     // WigglePwn Cyber Pet views & engine
     private lateinit var petDockContainer: View
-    private lateinit var wigglePetView: CopilotOctopusAnimationView
+    private lateinit var wigglePetView: LumiPetView
     private lateinit var petNameTitleText: TextView
     private lateinit var petPwnedBadgeText: TextView
     private lateinit var petSpeechText: TextView
@@ -151,6 +156,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var locationManager: LocationManager
     private lateinit var wifiManager: WifiManager
     private lateinit var bluetoothManager: BluetoothManager
+    private lateinit var smartLightController: SmartLightBleController
     private lateinit var packetAnalyzer: PacketAnalyzer
     private lateinit var toolsController: WirelessToolsController
     private var currentTheme = AppTheme.KOHOLINT_TOYBOX
@@ -228,9 +234,7 @@ class MainActivity : AppCompatActivity() {
         override fun onLocationChanged(location: Location) {
             lastLocation = location
             trackPoints.add(Location(location))
-            gpsBadge.text = "GPS: %.4f, %.4f ±%.0fm".format(
-                location.latitude, location.longitude, location.accuracy
-            )
+            updateLocationText()
         }
     }
 
@@ -275,6 +279,7 @@ class MainActivity : AppCompatActivity() {
 
     private val phoneBleCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
+            smartLightController.observe(result)
             val deviceName = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 if (ContextCompat.checkSelfPermission(
                     this@MainActivity,
@@ -296,6 +301,10 @@ class MainActivity : AppCompatActivity() {
             }
             handleLine(message.toString())
         }
+
+        override fun onScanFailed(errorCode: Int) {
+            setStatus("Bluetooth scan failed ($errorCode)")
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -305,12 +314,25 @@ class MainActivity : AppCompatActivity() {
         currentTheme = AppTheme.getSavedTheme(this)
 
         initViews()
+        eventUi = EventUiShell(this)
+        eventUi.install()
+        signalListAdapter = SignalListAdapter(this)
+        findViewById<ListView>(R.id.signalList).apply {
+            adapter = signalListAdapter
+            emptyView = resultsText
+            setOnItemClickListener { _, _, position, _ ->
+                showNetworkDetailDialog(signalListAdapter.getItem(position).key)
+            }
+        }
         initControllers()
         restoreAirspaceState()
         initListeners()
         applyTheme(currentTheme)
+        switchTab(savedInstanceState?.getInt("selected_tab", 0)?.coerceIn(0, 4) ?: 0)
+        val restoredFilter = savedInstanceState?.getString("selected_filter") ?: "ALL"
+        setFilter(if (restoredFilter in listOf("ALL", "WIFI", "BLE", "VULN")) restoredFilter else "ALL")
 
-        requestConnection()
+        refreshUsbAvailability()
         startPhoneLocation()
         startPhoneWireless()
         startToolStatusTicker()
@@ -387,7 +409,6 @@ class MainActivity : AppCompatActivity() {
         toolArmBtn = findViewById(R.id.toolArmBtn)
         toolPcapToggleBtn = findViewById(R.id.toolPcapToggleBtn)
         toolStopAllBtn = findViewById(R.id.toolStopAllBtn)
-        toolPortalViewCredsBtn = findViewById(R.id.toolPortalViewCredsBtn)
         toolViewStationsBtn = findViewById(R.id.toolViewStationsBtn)
         toolViewSkimmersBtn = findViewById(R.id.toolViewSkimmersBtn)
         toolViewWpsPmfBtn = findViewById(R.id.toolViewWpsPmfBtn)
@@ -439,6 +460,13 @@ class MainActivity : AppCompatActivity() {
         locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
         wifiManager = applicationContext.getSystemService(WIFI_SERVICE) as WifiManager
         bluetoothManager = getSystemService(BLUETOOTH_SERVICE) as BluetoothManager
+        smartLightController = SmartLightBleController(this) { message ->
+            if (!smartLightController.isConnected && ::toolsController.isInitialized) {
+                toolsController.stopSmartLightAnim()
+            }
+            setStatus(message)
+            if (::lightDetailText.isInitialized) updateToolStatusLabels()
+        }
         serial = UsbSerialController(usbManager, ::handleLine, ::setStatus)
 
         petCompanion = WigglePetCompanion(this) { petState ->
@@ -502,7 +530,13 @@ class MainActivity : AppCompatActivity() {
             }
         )
 
-        toolsController = WirelessToolsController(this, serial, packetAnalyzer) { msg ->
+        toolsController = WirelessToolsController(
+            context = this,
+            serial = serial,
+            packetAnalyzer = packetAnalyzer,
+            writeSmartLightColor = smartLightController::sendColor,
+            writeSmartLightPower = smartLightController::sendPower,
+        ) { msg ->
             setStatus(msg)
             updateToolStatusLabels()
         }
@@ -540,7 +574,17 @@ class MainActivity : AppCompatActivity() {
     private fun initListeners() {
         // Top Header
         themeButton.setOnClickListener { showThemePickerDialog() }
-        connectButton.setOnClickListener { requestConnection() }
+        connectButton.setOnClickListener {
+            if (serial.isConnected()) {
+                serial.disconnect()
+                connectedUsbLabel = ""
+                connectButton.text = "CONNECT"
+                deviceBadge.text = "USB: DISCONNECTED"
+                setStatus("USB serial device disconnected")
+            } else {
+                requestConnection()
+            }
+        }
 
         // Interactive Pet Poke Listener
         val onPetPoke = View.OnClickListener {
@@ -681,40 +725,44 @@ class MainActivity : AppCompatActivity() {
         }
         findViewById<Button>(R.id.toolHuntExportBtn).setOnClickListener { shareHashcat22000() }
 
-        // Smart RGB Light Hijacker Buttons
+        findViewById<Button>(R.id.toolLightDiscoverBtn).setOnClickListener { showSmartLightPicker() }
+        findViewById<Button>(R.id.toolLightDisconnectBtn).setOnClickListener {
+            toolsController.stopSmartLightAnim()
+            smartLightController.disconnect()
+            updateToolStatusLabels()
+        }
+
+        // Smart RGB controls only target the light explicitly selected below.
         findViewById<Button>(R.id.toolLightOnBtn).setOnClickListener {
             toolsController.sendSmartLightPower(true)
-            petCompanion.onAttackStarted("Smart Light ON")
         }
         findViewById<Button>(R.id.toolLightOffBtn).setOnClickListener {
             toolsController.sendSmartLightPower(false)
-            petCompanion.onAttackStarted("Smart Light OFF")
         }
         findViewById<Button>(R.id.toolLightRedBtn).setOnClickListener { toolsController.sendSmartLightColor(255, 0, 0) }
         findViewById<Button>(R.id.toolLightGreenBtn).setOnClickListener { toolsController.sendSmartLightColor(0, 255, 0) }
         findViewById<Button>(R.id.toolLightBlueBtn).setOnClickListener { toolsController.sendSmartLightColor(0, 0, 255) }
         findViewById<Button>(R.id.toolLightGoldBtn).setOnClickListener { toolsController.sendSmartLightColor(255, 215, 0) }
         findViewById<Button>(R.id.toolLightRainbowBtn).setOnClickListener {
-            if (!requireToolsArmed("RGB Rainbow Override")) return@setOnClickListener
+            if (!smartLightController.isConnected) {
+                showSmartLightPicker()
+                return@setOnClickListener
+            }
             toolsController.startSmartLightRainbow()
-            petCompanion.onAttackStarted("RGB Rainbow Override")
         }
-        findViewById<Button>(R.id.toolLightStrobeBtn).setOnClickListener {
-            if (!requireToolsArmed("RGB Strobe Hijack")) return@setOnClickListener
-            toolsController.startSmartLightStrobe()
-            petCompanion.onAttackStarted("RGB Strobe Hijack")
+        findViewById<Button>(R.id.toolLightStopAnimationBtn).setOnClickListener {
+            toolsController.stopSmartLightAnim()
         }
 
-        // Evil Captive Portal Buttons
+        // Captive portal demo controls
         findViewById<Button>(R.id.toolPortalLaunchBtn).setOnClickListener {
-            if (!requireToolsArmed("Evil Captive Portal")) return@setOnClickListener
-            showEvilPortalLaunchDialog()
+            if (!requireToolsArmed("Captive Portal Demo")) return@setOnClickListener
+            showCaptivePortalDemoLaunchDialog()
         }
         findViewById<Button>(R.id.toolPortalStopBtn).setOnClickListener {
-            toolsController.stopEvilPortal()
+            toolsController.stopCaptivePortalDemo()
             updateToolStatusLabels()
         }
-        toolPortalViewCredsBtn.setOnClickListener { showHarvestedCredentialsDialog() }
 
         // Probe Flooder & Recon Buttons
         findViewById<Button>(R.id.toolProbeFloodStartBtn).setOnClickListener {
@@ -772,7 +820,7 @@ class MainActivity : AppCompatActivity() {
         runOnUiThread {
             wigglePetView.setMood(state.mood)
             wigglePetView.setEvolutionStage(state.evolutionStage)
-            petNameTitleText.text = "🐙 ${state.name} LVL ${state.level} (${state.levelTitle})"
+            petNameTitleText.text = "✦ ${state.name} LVL ${state.level} (${state.levelTitle})"
             petPwnedBadgeText.text = "🔑 PWND: ${state.pwnedCount}"
             petSpeechText.text = state.speechText
             petExpText.text = "EXP: ${state.currentExp}/${state.maxExp}"
@@ -806,16 +854,7 @@ class MainActivity : AppCompatActivity() {
         sectionAnalytics.visibility = if (tabIndex == 3) View.VISIBLE else View.GONE
         sectionExports.visibility = if (tabIndex == 4) View.VISIBLE else View.GONE
 
-        val tabBtns = listOf(tabScannerBtn, tabRadarBtn, tabToolsBtn, tabAnalyticsBtn, tabExportsBtn)
-        tabBtns.forEachIndexed { i, btn ->
-            if (i == tabIndex) {
-                btn.setBackgroundResource(R.drawable.btn_3d_cyan)
-                btn.setTextColor(Color.BLACK)
-            } else {
-                btn.setBackgroundResource(R.drawable.btn_3d_dark)
-                btn.setTextColor(Color.WHITE)
-            }
-        }
+        eventUi.selectTab(tabIndex)
         if (tabIndex == 3) updateAnalyticsContent()
         updateGlobalUxDashboard()
     }
@@ -829,14 +868,15 @@ class MainActivity : AppCompatActivity() {
             "VULN" to filterVulnBtn
         )
         filterBtns.forEach { (name, btn) ->
+            btn.isSelected = name == filter
+            btn.contentDescription = "${btn.text}${if (name == filter) ", selected" else ""}"
             if (name == filter) {
-                btn.setBackgroundResource(R.drawable.btn_3d_cyan)
-                btn.setTextColor(Color.BLACK)
+                ComicInk.style(btn, currentTheme.primaryAccent)
             } else {
-                btn.setBackgroundResource(R.drawable.btn_3d_dark)
-                btn.setTextColor(Color.WHITE)
+                ComicInk.style(btn, currentTheme.surface)
             }
         }
+        ComicMotion.pop(filterBtns.first { it.first == filter }.second)
         renderNetworks()
     }
 
@@ -847,29 +887,72 @@ class MainActivity : AppCompatActivity() {
 
     private fun showThemePickerDialog() {
         val themes = AppTheme.values()
-        val names = themes.map { it.title }.toTypedArray()
-        AlertDialog.Builder(this)
-            .setTitle("🎨 Select Console Palette")
-            .setItems(names) { _, which ->
-                val selected = themes[which]
-                AppTheme.saveTheme(this, selected)
-                applyTheme(selected)
-                Toast.makeText(this, "Theme set to ${selected.title}", Toast.LENGTH_SHORT).show()
+        val names = (themes.map { it.title } +
+            "Motion / ${if (ComicMotion.enabled(this)) "ON - tap for reduced motion" else "OFF - tap to animate"}").toTypedArray()
+        val density = resources.displayMetrics.density
+        val paintRows = object : ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, names) {
+            override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+                return (super.getView(position, convertView, parent) as TextView).apply {
+                    textSize = 14f
+                    typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD)
+                    setTextColor(ComicInk.black)
+                    minHeight = (64 * density).toInt()
+                    setPadding((18 * density).toInt(), (10 * density).toInt(),
+                        (18 * density).toInt(), (12 * density).toInt())
+                    background = ComicInk.button(
+                        if (position < themes.size) themes[position].primaryAccent else currentTheme.surface, density,
+                    )
+                }
             }
+        }
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("CUSTOM PAINT SHOP")
+            .setAdapter(paintRows) { _, which ->
+                if (which < themes.size) {
+                    val selected = themes[which]
+                    AppTheme.saveTheme(this, selected)
+                    applyTheme(selected)
+                    Toast.makeText(this, "Fresh paint: ${selected.title}", Toast.LENGTH_SHORT).show()
+                } else {
+                    ComicMotion.setEnabled(this, !ComicMotion.enabled(this))
+                    eventUi.refreshMotion()
+                    Toast.makeText(this, if (ComicMotion.enabled(this)) "Comic motion on" else "Reduced motion on", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Back to the show", null)
             .show()
+        dialog.window?.setBackgroundDrawable(ComicPanelDrawable(currentTheme.surface, density))
+        dialog.findViewById<TextView>(androidx.appcompat.R.id.alertTitle)?.apply {
+            textSize = 18f
+            setTextColor(ComicInk.black)
+            typeface = android.graphics.Typeface.create("sans-serif-black", android.graphics.Typeface.BOLD_ITALIC)
+        }
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).apply {
+            textSize = 12f
+            ComicInk.style(this, currentTheme.primaryAccent)
+        }
     }
 
     private fun applyTheme(theme: AppTheme) {
         currentTheme = theme
         findViewById<View>(R.id.rootContainer).setBackgroundColor(theme.background)
         findViewById<View>(R.id.headerContainer).setBackgroundColor(theme.surface)
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            isAppearanceLightStatusBars = true
+            isAppearanceLightNavigationBars = true
+        }
+        window.navigationBarColor = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) theme.surface else ComicInk.black
+        window.statusBarColor = theme.surface
         appTitleText.setTextColor(theme.primaryAccent)
         countWifiText.setTextColor(theme.primaryAccent)
         countBleText.setTextColor(theme.secondaryAccent)
         countThreatText.setTextColor(theme.tertiaryAccent)
         petNameTitleText.setTextColor(theme.primaryAccent)
         petPwnedBadgeText.setTextColor(theme.tertiaryAccent)
-        renderNetworks()
+        eventUi.applyTheme(theme)
+        eventUi.selectTab(selectedTabIndex)
+        setFilter(selectedFilter)
+        if (selectedTabIndex == 3) updateAnalyticsContent()
     }
 
     private fun updateToolStatusLabels() {
@@ -878,7 +961,7 @@ class MainActivity : AppCompatActivity() {
             state.beaconMode != WirelessToolsController.BeaconMode.OFF,
             state.bleSpamMode != WirelessToolsController.BleSpamMode.OFF,
             state.activeHuntBssid != null,
-            state.isEvilPortalActive,
+            state.isCaptivePortalDemoActive,
             state.isProbeFloodActive,
             state.isSmartLightAnimationActive,
             state.geigerTarget != null,
@@ -911,10 +994,10 @@ class MainActivity : AppCompatActivity() {
         }
         lastTrafficSnapshot = currentTraffic
 
-        beaconStatusText.text = "📡 BEACON FLOODER: [${if (state.beaconMode == WirelessToolsController.BeaconMode.OFF) "OFF" else "RUNNING ${state.beaconMode.name}"}]"
-        bleSpamStatusText.text = "📶 BLE ECOSYSTEM SPAMMER: [${if (state.bleSpamMode == WirelessToolsController.BleSpamMode.OFF) "OFF" else "RUNNING ${state.bleSpamMode.name}"}]"
-        portalStatusText.text = "🕸️ EVIL CAPTIVE PORTAL: [${if (state.isEvilPortalActive) "RUNNING ${state.evilPortalSsid}" else "OFF"}]"
-        probeFloodStatusText.text = "🌊 PROBE FLOODER: [${if (state.isProbeFloodActive) "RUNNING" else "OFF"}]$huntLabel"
+        beaconStatusText.text = "Beacon broadcast / ${if (state.beaconMode == WirelessToolsController.BeaconMode.OFF) "off" else state.beaconMode.name}"
+        bleSpamStatusText.text = "BLE test broadcasts / ${if (state.bleSpamMode == WirelessToolsController.BleSpamMode.OFF) "off" else state.bleSpamMode.name}"
+        portalStatusText.text = "Portal demo / ${if (state.isCaptivePortalDemoActive) state.captivePortalSsid else "off"}"
+        probeFloodStatusText.text = "Probe broadcast / ${if (state.isProbeFloodActive) "running" else "off"}$huntLabel"
         beaconDetailText.text = "Mode ${state.beaconMode.name} | TX ${state.beaconFramesSent} frames | ${if (toolsArmed) "Armed" else "Arm required"}"
         bleDetailText.text = "Mode ${state.bleSpamMode.name} | TX ${state.bleAdvertisementsSent} adverts | ${if (toolsArmed) "Armed" else "Arm required"}"
         val handshakeCount = packetAnalyzer.getCapturedHandshakes().size
@@ -939,28 +1022,27 @@ class MainActivity : AppCompatActivity() {
             if (targetRssi != null) append(" | RSSI $targetRssi dBm")
             append("\nPCAP: ${if (state.isPcapActive) "recording" else "off"} | Keys this hunt: $newHuntKeys")
         }
-        lightDetailText.text = "Mode ${state.smartLightMode.name} | Commands ${state.smartLightCommandsSent} | Animation ${if (state.isSmartLightAnimationActive) "ON" else "OFF"}"
-        portalDetailText.text = "SSID ${if (state.isEvilPortalActive) state.evilPortalSsid else "none"} | Credentials ${state.harvestedCredentialCount} | ${if (toolsArmed) "Armed" else "Arm required"}"
+        lightDetailText.text = "${smartLightController.statusLabel} | ${state.smartLightMode.name} | Commands ${state.smartLightCommandsSent} | Animation ${if (state.isSmartLightAnimationActive) "ON" else "OFF"}"
+        portalDetailText.text = "SSID ${if (state.isCaptivePortalDemoActive) state.captivePortalSsid else "none"} | No credential capture | ${if (toolsArmed) "Armed" else "Arm required"}"
         probeDetailText.text = "Flood ${if (state.isProbeFloodActive) "ON" else "OFF"} | Probe TX ${state.probeFramesSent} | Clients ${packetAnalyzer.getConnectedStations().size} | Skimmers ${packetAnalyzer.getDetectedSkimmers().size}"
         ledDetailText.text = "LED $lastLedAlert | Auto: gold=keys red=threats | Manual test ready"
 
         toolLiveOpsText.text = "LIVE OPS: $armLabel | $runningLabel$geigerLabel$pcapLabel"
         toolTrafficText.text = "NOW +$trafficDelta/s | beacon +$beaconDelta BLE +$bleDelta deauth +$deauthDelta probes +$probeDelta lights +$lightDelta RX +$rawDelta\nTOTAL beacon ${state.beaconFramesSent} | BLE ${state.bleAdvertisementsSent} | deauth ${state.deauthFramesSent} | probes ${state.probeFramesSent} | lights ${state.smartLightCommandsSent} | RX raw ${state.rawWifiFramesObserved}"
         toolLastEventText.text = "Last event: ${state.lastEvent} (${formatElapsed(state.lastEventAt)})"
-        appStatusText.text = "OPS: $runningLabel | RX ${state.rawWifiFramesObserved} | ${state.lastEvent}"
+        appStatusText.text = if (runningTools == 0) "Passive survey / ${wifiRecords.size + bleRecords.size} signals observed"
+            else "$runningLabel / ${state.lastEvent}"
         updateGlobalUxDashboard(state, runningTools, trafficDelta)
 
-        toolArmBtn.text = if (toolsArmed) "🟢 ARMED" else "🛡️ ARM"
-        toolArmBtn.setBackgroundResource(if (toolsArmed) R.drawable.btn_3d_cyan else R.drawable.btn_3d_amber)
-        toolArmBtn.setTextColor(Color.BLACK)
-        toolPcapToggleBtn.text = if (state.isPcapActive) "💾 PCAP ON" else "💾 PCAP"
-        toolPcapToggleBtn.setBackgroundResource(if (state.isPcapActive) R.drawable.btn_3d_cyan else R.drawable.btn_3d_dark)
-        toolPcapToggleBtn.setTextColor(if (state.isPcapActive) Color.BLACK else Color.WHITE)
-        toolStopAllBtn.text = if (runningTools > 0) "⛔ STOP $runningTools" else "⛔ STOP ALL"
+        toolArmBtn.text = if (toolsArmed) "Armed" else "Arm tests"
+        ComicInk.style(toolArmBtn, if (toolsArmed) currentTheme.primaryAccent else currentTheme.tertiaryAccent)
+        toolPcapToggleBtn.text = if (state.isPcapActive) "Recording" else "Record"
+        ComicInk.style(toolPcapToggleBtn, if (state.isPcapActive) currentTheme.primaryAccent else currentTheme.surface)
+        toolStopAllBtn.text = if (runningTools > 0) "Stop $runningTools" else "Stop all"
 
         findViewById<Button>(R.id.toolBeaconStopBtn).text = if (state.beaconMode == WirelessToolsController.BeaconMode.OFF) "⛔ FLOOD OFF" else "⛔ STOP ${state.beaconMode.name}"
         findViewById<Button>(R.id.toolBleStopBtn).text = if (state.bleSpamMode == WirelessToolsController.BleSpamMode.OFF) "⛔ SPAM OFF" else "⛔ STOP ${state.bleSpamMode.name}"
-        findViewById<Button>(R.id.toolPortalStopBtn).text = if (state.isEvilPortalActive) "⛔ STOP PORTAL" else "⛔ PORTAL OFF"
+        findViewById<Button>(R.id.toolPortalStopBtn).text = if (state.isCaptivePortalDemoActive) "⛔ STOP PORTAL" else "⛔ PORTAL OFF"
         findViewById<Button>(R.id.toolProbeFloodStopBtn).text = if (state.isProbeFloodActive) "⛔ STOP FLOOD" else "⛔ FLOOD OFF"
 
         styleToolButton(R.id.toolBeaconRandomBtn, state.beaconMode == WirelessToolsController.BeaconMode.RANDOM)
@@ -975,13 +1057,12 @@ class MainActivity : AppCompatActivity() {
         styleStopButton(R.id.toolHuntStopBtn, state.activeHuntBssid != null)
         styleToolButton(R.id.toolHuntExportBtn, handshakeCount > 0)
         styleToolButton(R.id.toolLightRainbowBtn, state.smartLightMode == WirelessToolsController.SmartLightMode.RAINBOW)
-        styleToolButton(R.id.toolLightStrobeBtn, state.smartLightMode == WirelessToolsController.SmartLightMode.STROBE)
-        styleToolButton(R.id.toolPortalLaunchBtn, state.isEvilPortalActive)
-        styleStopButton(R.id.toolPortalStopBtn, state.isEvilPortalActive)
+        styleStopButton(R.id.toolLightStopAnimationBtn, state.isSmartLightAnimationActive)
+        styleToolButton(R.id.toolPortalLaunchBtn, state.isCaptivePortalDemoActive)
+        styleStopButton(R.id.toolPortalStopBtn, state.isCaptivePortalDemoActive)
         styleToolButton(R.id.toolProbeFloodStartBtn, state.isProbeFloodActive)
         styleStopButton(R.id.toolProbeFloodStopBtn, state.isProbeFloodActive)
 
-        toolPortalViewCredsBtn.text = "🔑 HARVESTED CREDENTIALS (${state.harvestedCredentialCount})"
         toolViewStationsBtn.text = "📱 CLIENTS (${packetAnalyzer.getConnectedStations().size})"
         toolViewSkimmersBtn.text = "🕵️ SKIMMERS (${packetAnalyzer.getDetectedSkimmers().size})"
     }
@@ -1005,25 +1086,13 @@ class MainActivity : AppCompatActivity() {
         uxAirspaceChipText.text = "AIR\n$signalCount SIG / $threatCount RISK"
         uxOpsChipText.text = if (runningTools > 0) "TOOLS\n$runningTools ON" else "TOOLS\nREADY"
         uxTrafficChipText.text = "TRAFFIC\n$trafficLabel"
-        tabScannerBtn.text = "📡 SCAN ${wifiRecords.size + bleRecords.size}"
-        tabRadarBtn.text = if (state?.geigerTarget != null) "🛰️ LOCK" else "🛰️ AIRSPACE"
-        tabToolsBtn.text = if (runningTools > 0) "⚡ $runningTools ON" else "⚡ TOOLS"
-        tabAnalyticsBtn.text = if (threatCount > 0) "📊 $threatCount RISK" else "📊 INTEL"
-        tabExportsBtn.text = if (state?.isPcapActive == true) "💾 REC" else "💾 SAVE"
-        val tabBtns = listOf(tabScannerBtn, tabRadarBtn, tabToolsBtn, tabAnalyticsBtn, tabExportsBtn)
-        tabBtns.forEachIndexed { i, btn ->
-            if (i == selectedTabIndex) {
-                btn.setBackgroundResource(R.drawable.btn_3d_cyan)
-                btn.setTextColor(Color.BLACK)
-            }
-        }
     }
 
     private fun currentRunningToolCount(state: WirelessToolsController.ToolRuntimeState): Int = listOf(
         state.beaconMode != WirelessToolsController.BeaconMode.OFF,
         state.bleSpamMode != WirelessToolsController.BleSpamMode.OFF,
         state.activeHuntBssid != null,
-        state.isEvilPortalActive,
+        state.isCaptivePortalDemoActive,
         state.isProbeFloodActive,
         state.isSmartLightAnimationActive,
         state.geigerTarget != null,
@@ -1032,14 +1101,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun styleToolButton(buttonId: Int, active: Boolean) {
         val button = findViewById<Button>(buttonId)
-        button.setBackgroundResource(if (active) R.drawable.btn_3d_amber else R.drawable.btn_3d_dark)
-        button.setTextColor(if (active) Color.BLACK else Color.WHITE)
+        ComicInk.style(button, if (active) currentTheme.tertiaryAccent else currentTheme.surface)
     }
 
     private fun styleStopButton(buttonId: Int, active: Boolean) {
         val button = findViewById<Button>(buttonId)
-        button.setBackgroundResource(if (active) R.drawable.btn_3d_pink else R.drawable.btn_3d_dark)
-        button.setTextColor(if (active) Color.BLACK else Color.WHITE)
+        ComicInk.style(button, if (active) currentTheme.secondaryAccent else currentTheme.surface)
     }
 
     private fun appendToolEvent(message: String) {
@@ -1090,9 +1157,27 @@ class MainActivity : AppCompatActivity() {
         Toast.makeText(this, "Session records cleared", Toast.LENGTH_SHORT).show()
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putInt("selected_tab", selectedTabIndex)
+        outState.putString("selected_filter", selectedFilter)
+        super.onSaveInstanceState(outState)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        if (::toolsController.isInitialized) startToolStatusTicker()
+    }
+
+    override fun onStop() {
+        uiHandler.removeCallbacks(toolStatusTicker)
+        super.onStop()
+    }
+
     override fun onDestroy() {
+        if (::eventUi.isInitialized) eventUi.close()
         uiHandler.removeCallbacks(toolStatusTicker)
         toolsController.cleanup()
+        smartLightController.close()
         serial.disconnect()
         stopPhoneLocation()
         stopPhoneWireless()
@@ -1121,9 +1206,20 @@ class MainActivity : AppCompatActivity() {
         deviceBadge.text = "USB: WAITING PERMISSION..."
     }
 
+    private fun refreshUsbAvailability() {
+        val device = serial.findDevice()
+        connectButton.text = "Connect"
+        if (device == null) {
+            deviceBadge.text = "USB / not connected"
+            return
+        }
+        deviceBadge.text = "USB: DEVICE READY (${UsbSerialController.friendlyName(device)})"
+        setStatus("USB serial device available. Tap CONNECT to open it.")
+    }
+
     private fun connect(device: android.hardware.usb.UsbDevice) {
         if (serial.connect(device)) {
-            connectButton.text = "CONNECTED"
+            connectButton.text = "DISCONNECT"
             connectedUsbLabel = "${UsbSerialController.friendlyName(device)} VID %04X PID %04X".format(device.vendorId, device.productId)
             deviceBadge.text = "USB: CONNECTED (${device.deviceName})"
             logUsbEvent("connected")
@@ -1132,18 +1228,18 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    @SuppressLint("InlinedApi")
     private fun startPhoneLocation() {
         if (checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(
-                arrayOf(
-                    android.Manifest.permission.ACCESS_FINE_LOCATION,
-                    android.Manifest.permission.ACCESS_COARSE_LOCATION,
-                    android.Manifest.permission.BLUETOOTH_SCAN,
-                    android.Manifest.permission.BLUETOOTH_CONNECT,
-                    android.Manifest.permission.NEARBY_WIFI_DEVICES,
-                ),
-                42,
+            val requestedPermissions = mutableListOf(
+                android.Manifest.permission.ACCESS_FINE_LOCATION,
+                android.Manifest.permission.ACCESS_COARSE_LOCATION,
             )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                requestedPermissions += android.Manifest.permission.BLUETOOTH_SCAN
+                requestedPermissions += android.Manifest.permission.BLUETOOTH_CONNECT
+            }
+            requestPermissions(requestedPermissions.toTypedArray(), 42)
             gpsBadge.text = "GPS: PERMISSION NEEDED"
             return
         }
@@ -1172,8 +1268,76 @@ class MainActivity : AppCompatActivity() {
         if (requestCode == 42 && grantResults.any { it == PackageManager.PERMISSION_GRANTED }) {
             startPhoneLocation()
             startPhoneWireless()
+        } else if (requestCode == lightPermissionRequest) {
+            if (hasPhoneBlePermissions()) {
+                startPhoneBleScan()
+                setStatus("Nearby Devices permission granted; searching for compatible RGB lights")
+            } else {
+                setStatus("Nearby Devices permission is required to discover and connect to a light")
+            }
         }
     }
+
+    private fun showSmartLightPicker() {
+        val requiredPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            arrayOf(
+                android.Manifest.permission.BLUETOOTH_SCAN,
+                android.Manifest.permission.BLUETOOTH_CONNECT,
+            )
+        } else {
+            arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+        if (!hasPhoneBlePermissions()) {
+            requestPermissions(requiredPermissions, lightPermissionRequest)
+            return
+        }
+
+        val adapter = bluetoothManager.adapter
+        if (adapter == null || !adapter.isEnabled) {
+            Toast.makeText(this, "Turn on Bluetooth to find your RGB light", Toast.LENGTH_LONG).show()
+            return
+        }
+        startPhoneBleScan()
+
+        val lights = smartLightController.discoveredLights()
+        if (lights.isEmpty()) {
+            AlertDialog.Builder(this)
+                .setTitle("Find your RGB light")
+                .setMessage("No compatible BLE light has been seen recently. Turn on your light, keep it nearby, and try again. Supported families include Triones, Lotus Lantern, and ELK-BLEDOM.")
+                .setPositiveButton("Scan again") { _, _ -> startPhoneBleScan() }
+                .setNegativeButton("Close", null)
+                .show()
+            return
+        }
+
+        val labels = lights.map { light ->
+            "${light.name}  •  ${light.rssi} dBm  •  ${light.address.takeLast(5)}"
+        }.toTypedArray()
+        AlertDialog.Builder(this)
+            .setTitle("Choose a light you own")
+            .setItems(labels) { _, index -> confirmSmartLightConnection(lights[index]) }
+            .setNegativeButton("Close", null)
+            .show()
+    }
+
+    private fun confirmSmartLightConnection(light: SmartLightBleController.DiscoveredLight) {
+        AlertDialog.Builder(this)
+            .setTitle("Connect to ${light.name}?")
+            .setMessage("Only connect to a light you own or have permission to control. Wigglefish will connect directly to this selected BLE device; it will not broadcast color commands to other lights.")
+            .setPositiveButton("Connect to my light") { _, _ ->
+                smartLightController.connectTo(light)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun hasPhoneBlePermissions(): Boolean =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            ContextCompat.checkSelfPermission(this, android.Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, android.Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
+        } else {
+            ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        }
 
     private fun startPhoneWireless() {
         if (checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -1184,10 +1348,24 @@ class MainActivity : AppCompatActivity() {
                 setStatus("Phone scan unavailable; ESP32-C5 active")
             }
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-            checkSelfPermission(android.Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED) {
-            phoneBleScanner = bluetoothManager.adapter?.bluetoothLeScanner
-            phoneBleScanner?.startScan(phoneBleCallback)
+        startPhoneBleScan()
+    }
+
+    private fun startPhoneBleScan() {
+        if (!hasPhoneBlePermissions()) return
+        try {
+            val scanner = bluetoothManager.adapter?.bluetoothLeScanner
+            if (scanner == null) {
+                setStatus("Bluetooth LE scanning is unavailable on this device")
+                return
+            }
+            phoneBleScanner?.stopScan(phoneBleCallback)
+            phoneBleScanner = scanner
+            scanner.startScan(phoneBleCallback)
+        } catch (error: SecurityException) {
+            setStatus("Bluetooth scan permission denied: ${error.message ?: "scan blocked"}")
+        } catch (error: IllegalStateException) {
+            setStatus("Bluetooth scan could not start: ${error.message ?: "scanner unavailable"}")
         }
     }
 
@@ -1202,12 +1380,12 @@ class MainActivity : AppCompatActivity() {
     private fun updateLocationText() {
         val location = lastLocation
         gpsBadge.text = if (location == null) {
-            "GPS: $satelliteCount SATS (SEARCHING)"
+            "GPS / searching"
         } else {
-            "GPS: $satelliteCount SATS (%.4f, %.4f ±%.0fm)".format(
-                location.latitude, location.longitude, location.accuracy
-            )
+            "GPS / %.0f m accuracy".format(location.accuracy)
         }
+        gpsBadge.contentDescription = if (location == null) "GPS searching, $satelliteCount satellites"
+            else "GPS accuracy ${location.accuracy.toInt()} meters, $satelliteCount satellites, latitude ${location.latitude}, longitude ${location.longitude}"
     }
 
     private fun frequencyToChannel(frequency: Int): Int = when {
@@ -1220,6 +1398,10 @@ class MainActivity : AppCompatActivity() {
         runOnUiThread {
             try {
                 val message = JSONObject(line)
+                if (message.optString("type") == "credential_harvested") {
+                    setStatus("Discarded a legacy portal credential event without saving its contents")
+                    return@runOnUiThread
+                }
                 if (message.has("type") && !message.has("source")) message.put("source", "ESP32_SERIAL")
                 if (message.has("type")) logObservation(message)
                 when (message.optString("event")) {
@@ -1230,6 +1412,9 @@ class MainActivity : AppCompatActivity() {
                     }
                     "scan_end" -> setStatus("Airspace survey updated")
                     "error" -> setStatus("Device error: ${message.optString("message", "unknown")}")
+                    "portal_demo_error" -> toolsController.onCaptivePortalDemoFailed(
+                        message.optString("message", "Captive portal demo could not start")
+                    )
                 }
                 when (message.optString("type")) {
                     "wifi" -> {
@@ -1323,20 +1508,6 @@ class MainActivity : AppCompatActivity() {
                         }
                         scheduleRenderNetworks()
                     }
-                    "credential_harvested" -> {
-                        val ssid = message.optString("ssid")
-                        val template = message.optString("template")
-                        val user = message.optString("username")
-                        val pass = message.optString("password")
-                        val cred = WirelessToolsController.HarvestedCredential(ssid, template, user, pass)
-                        toolsController.addHarvestedCredential(cred)
-                        threatAlertText.visibility = View.VISIBLE
-                        threatAlertText.text = "🔑 CREDENTIAL HARVESTED: [$user : $pass] on '$ssid'"
-                        toolPortalViewCredsBtn.text = "🔑 HARVESTED CREDENTIALS (${toolsController.harvestedCredentials.size})"
-                        updateToolStatusLabels()
-                        animateDecodeLabel("CRED: $user")
-                        Toast.makeText(this, "🔑 PHISHING CREDENTIAL CAPTURED: $user", Toast.LENGTH_LONG).show()
-                    }
                     "raw_wifi" -> {
                         val ch = message.optInt("ch", 1)
                         val rssi = message.optInt("rssi", -50)
@@ -1365,13 +1536,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun renderNetworks() {
-        countWifiText.text = "${wifiRecords.size}\nWi-Fi APs"
-        countBleText.text = "${bleRecords.size}\nBLE Beacons"
+        countWifiText.text = "${wifiRecords.size}\nWi-Fi"
+        countBleText.text = "${bleRecords.size}\nBLE"
         val vulnerableCount = rawRecords.values.count {
             val risk = it.optString("risk_level")
             risk == "CRITICAL" || risk == "HIGH"
         }
-        countThreatText.text = "$vulnerableCount\nVulnerable"
+        countThreatText.text = "$vulnerableCount\nFlagged"
         updateRadarTelemetry(vulnerableCount)
 
         // 2.4G & 5G dual-band spectrum rendering
@@ -1611,45 +1782,39 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun renderResultsList(entries: List<Map.Entry<String, String>>) {
-        if (entries.isEmpty()) {
-            resultsText.text = "No observations matching filter [$selectedFilter]..."
-            return
+        resultsText.text = if (selectedFilter == "ALL") {
+            "Ready to explore\n\nNearby Wi-Fi and Bluetooth signals will appear here.\nConnect a board for USB survey data."
+        } else {
+            "No matching signals yet\n\nTry another filter or wait for new observations."
         }
-        val builder = android.text.SpannableStringBuilder()
-        entries.forEachIndexed { index, entry ->
-            val start = builder.length
-            builder.append(entry.value)
-            val riskLevel = rawRecords[entry.key]?.optString("risk_level")
-            val color = riskColor(riskLevel)
-            builder.setSpan(
-                android.text.style.ForegroundColorSpan(color),
-                start, builder.length,
-                android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE,
-            )
-            builder.setSpan(
-                object : android.text.style.ClickableSpan() {
-                    override fun onClick(widget: View) = showNetworkDetailDialog(entry.key)
-                    override fun updateDrawState(ds: android.text.TextPaint) {
-                        ds.color = color
-                        ds.isUnderlineText = false
-                    }
+        signalListAdapter.submit(entries.map { entry ->
+            val record = rawRecords[entry.key]
+            val isWifi = record?.optString("type") == "wifi"
+            val name = record?.optString("ssid").orEmpty()
+                .ifEmpty { record?.optString("name").orEmpty() }
+                .ifEmpty { if (isWifi) "Hidden network" else "Unnamed device" }
+            val risk = record?.optString("risk_level").orEmpty()
+            SignalRow(
+                key = entry.key,
+                name = name,
+                description = if (isWifi) {
+                    "Wi-Fi  /  Ch ${record?.optInt("channel")}  /  ${record?.optString("security", "Unknown")}\n${entry.key}"
+                } else {
+                    "Bluetooth  /  ${record?.optString("vendor", "Unknown vendor")}\n${entry.key}"
                 },
-                start, builder.length,
-                android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE,
+                signal = "${record?.optInt("rssi")} dBm",
+                risk = risk.ifEmpty { "Not assessed" },
+                color = riskColor(risk),
             )
-            if (index != entries.lastIndex) builder.append("\n")
-        }
-        resultsText.text = builder
-        resultsText.movementMethod = android.text.method.LinkMovementMethod.getInstance()
-        resultsText.highlightColor = Color.TRANSPARENT
+        }, currentTheme)
     }
 
     private fun riskColor(riskLevel: String?): Int = when (riskLevel) {
-        "CRITICAL" -> Color.parseColor("#FF1744")
-        "HIGH" -> Color.parseColor("#FF9100")
-        "MEDIUM" -> Color.parseColor("#FFD600")
-        "LOW" -> Color.parseColor("#00E676")
-        else -> currentTheme.primaryAccent
+        "CRITICAL" -> Color.parseColor("#9F1239")
+        "HIGH" -> Color.parseColor("#9A3412")
+        "MEDIUM" -> Color.parseColor("#775200")
+        "LOW" -> Color.parseColor("#146342")
+        else -> ComicInk.muted
     }
 
     private fun showNetworkDetailDialog(key: String) {
@@ -1820,60 +1985,27 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun showEvilPortalLaunchDialog() {
-        val templates = arrayOf(
-            "⚠️ Router Firmware Update (WPA Password Prompt)",
-            "📶 Free Public Wi-Fi Portal (Login Prompt)",
-            "🔐 Google Sign-in Verification"
-        )
-        val templateKeys = arrayOf("router", "wifi", "google")
-
+    private fun showCaptivePortalDemoLaunchDialog() {
         val input = android.widget.EditText(this).apply {
-            hint = "Broadcast SSID (e.g. Free-Public-WiFi)"
-            setText("Free-WiFi")
+            hint = "Lab SSID (e.g. Wigglefish-Lab)"
+            setText("Wigglefish-Lab")
             setTextColor(Color.WHITE)
             setHintTextColor(Color.GRAY)
         }
 
         AlertDialog.Builder(this)
-            .setTitle("🕸️ Launch Evil Captive Portal")
+            .setTitle("Launch captive portal demo")
             .setView(input)
-            .setItems(templates) { _, which ->
-                val chosenSsid = input.text.toString().ifEmpty { "Free-WiFi" }
-                val chosenTemplate = templateKeys[which]
-                toolsController.startEvilPortal(chosenSsid, chosenTemplate)
+            .setMessage("This creates a clearly labeled local lab network and demo landing page. The page never requests or stores credentials.")
+            .setPositiveButton("Launch demo") { _, _ ->
+                val chosenSsid = input.text.toString().ifBlank { "Wigglefish-Lab" }
+                if (toolsController.startCaptivePortalDemo(chosenSsid)) {
+                    petCompanion.onPortalStarted()
+                }
                 updateToolStatusLabels()
-                Toast.makeText(this, "Evil Portal running on SSID: $chosenSsid", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Captive portal demo running on SSID: $chosenSsid", Toast.LENGTH_LONG).show()
             }
             .setNegativeButton("Cancel", null)
-            .show()
-    }
-
-    private fun showHarvestedCredentialsDialog() {
-        val creds = toolsController.harvestedCredentials
-        if (creds.isEmpty()) {
-            Toast.makeText(this, "No credentials harvested yet", Toast.LENGTH_SHORT).show()
-            return
-        }
-        val sb = StringBuilder()
-        creds.forEachIndexed { i, c ->
-            sb.append("#${i + 1} [SSID: ${c.ssid}] [${c.template.uppercase()}]\n")
-            if (c.username.isNotEmpty()) sb.append("  Username: ${c.username}\n")
-            sb.append("  Password: ${c.password}\n\n")
-        }
-
-        AlertDialog.Builder(this)
-            .setTitle("🔑 Harvested Phishing Credentials (${creds.size})")
-            .setMessage(sb.toString())
-            .setPositiveButton("Close", null)
-            .setNeutralButton("Share / Copy") { _, _ ->
-                val intent = Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_SUBJECT, "Wigglefish Harvested Credentials")
-                    putExtra(Intent.EXTRA_TEXT, sb.toString())
-                }
-                startActivity(Intent.createChooser(intent, "Export Credentials"))
-            }
             .show()
     }
 
@@ -1980,10 +2112,10 @@ class MainActivity : AppCompatActivity() {
             else -> "MIXED"
         }
         val postureColor = when (posture) {
-            "HIGH RISK" -> Color.parseColor("#FF3366")
-            "WATCHLIST" -> Color.parseColor("#FFE600")
-            "CLEAN" -> Color.parseColor("#00F5D4")
-            else -> Color.parseColor("#B3E5FC")
+            "HIGH RISK" -> Color.parseColor("#9F1239")
+            "WATCHLIST" -> Color.parseColor("#775200")
+            "CLEAN" -> Color.parseColor("#146342")
+            else -> ComicInk.black
         }
         intelPostureText.text = "POSTURE: $posture | SCORE %.0f/100 | $highRiskCount HIGH RISK".format(avgScore)
         intelPostureText.setTextColor(postureColor)
@@ -2145,6 +2277,12 @@ class MainActivity : AppCompatActivity() {
         if (decodeRunning || decodeQueue.isEmpty()) return
         decodeRunning = true
         val job = decodeQueue.removeFirst()
+        if (selectedTabIndex != 1 || !ComicMotion.enabled(this)) {
+            decodeText.text = "LAST HEARD / ${job.label}"
+            decodeRunning = false
+            decodeQueue.clear()
+            return
+        }
         val alphabet = "01ZX7#@$%&"
         val frames = 12
         val seed = job.label.map { alphabet[it.code % alphabet.length] }.joinToString("")
@@ -2154,11 +2292,11 @@ class MainActivity : AppCompatActivity() {
                 val revealed = job.label.mapIndexed { index, character ->
                     if (index < job.label.length * frame / frames) character else alphabet[(index + frame) % alphabet.length]
                 }.joinToString("")
-                decodeText.text = revealed
+                if (decodeText.isShown && ComicMotion.enabled(this)) decodeText.text = revealed
             }, frame * 100L)
         }
         uiHandler.postDelayed({
-            decodeText.text = ""
+            decodeText.text = "LAST HEARD / ${job.label}"
             decodeRunning = false
             runNextDecode()
         }, (frames + 1) * 100L)

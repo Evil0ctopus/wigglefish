@@ -27,12 +27,12 @@ class WigglePetCompanion(
 
     enum class EvolutionStage(val stageIndex: Int, val minLevel: Int, val title: String) {
         BABY_GUPPY(0, 1, "Signal Sprout"),
-        SPICY_GOLDFISH(1, 3, "Copper Ink"),
-        NEON_TETRA(2, 5, "Neon Cephalopod"),
-        CYBER_BETTA(3, 10, "Circuit Keeper"),
-        APEX_PIRANHA(4, 15, "Void Sentinel"),
-        PACKET_MEGALODON(5, 20, "Abyss Engineer"),
-        CYBER_LEVIATHAN(6, 30, "Evil Octopus");
+        SPICY_GOLDFISH(1, 3, "Pearl Drifter"),
+        NEON_TETRA(2, 5, "Prism Ray"),
+        CYBER_BETTA(3, 10, "Aurora Glider"),
+        APEX_PIRANHA(4, 15, "Tide Warden"),
+        PACKET_MEGALODON(5, 20, "Abyssal Ray"),
+        CYBER_LEVIATHAN(6, 30, "Celestial Manta");
 
         companion object {
             fun fromLevel(level: Int): EvolutionStage = when {
@@ -48,7 +48,7 @@ class WigglePetCompanion(
     }
 
     data class PetState(
-        val name: String = "OCTO",
+        val name: String = "LUMI",
         val level: Int = 1,
         val evolutionStage: EvolutionStage = EvolutionStage.BABY_GUPPY,
         val levelTitle: String = "Signal Sprout",
@@ -68,15 +68,14 @@ class WigglePetCompanion(
     private var isInteracting = false
     private var lastAutonomousSpeechTime = System.currentTimeMillis()
 
-    // Autonomous companion chatter reflects the new circuit-octopus identity.
     private val autonomousChatterQuotes = listOf(
         "Circuitry clear. I'll keep watch from the edge of the signal map.",
         "Copper traces warm, teal eyes online. Looking sharp.",
-        "Eight arms, one very organized packet queue.",
+        "Wings spread. Signal watch is underway.",
         "Quiet mode engaged. I can still see the scan feed.",
         "A little violet glow makes every console better.",
         "I found a rhythm in the scan intervals. Interesting.",
-        "Tentacles synced. Ready when you are.",
+        "All fins in sync. Ready when you are.",
         "Scanning 2.4 GHz and 5 GHz bands. Passive ears only.",
         "Packets are just tiny postcards from the airwaves.",
         "A clean channel map is a thing of beauty.",
@@ -121,15 +120,9 @@ class WigglePetCompanion(
     )
 
     private val portalQuotes = listOf(
-        "🎣 Hook, line, and sinker! Phishing portal deployed!",
-        "Portal preview is ready. Keep testing within an authorized lab. 🕸️",
-        "DNS spoofing engaged! All roads lead to my portal!"
-    )
-
-    private val credCapturedQuotes = listOf(
-        "🔑 CREDENTIAL HARVESTED! Humans never learn! 😂",
-        "Got a password! Who uses 'password123' in 2026?! 🤣",
-        "Phish caught! Credential safely stored in my vault! 💎"
+        "A clear, safe captive portal demo is ready for the lab.",
+        "Portal preview ready. No credentials are requested or saved.",
+        "Local DNS demo is running. Keep it within your authorized lab."
     )
 
     private val alertQuotes = listOf(
@@ -142,8 +135,8 @@ class WigglePetCompanion(
         "Touch registered. Tentacle calibration complete.",
         "That tickles. I added a few extra sparks.",
         "Eight arms are harder to surprise than one.",
-        "I'm 90% circuitry, 10% sass, 100% octopus.",
-        "A quick stretch across the hex frame. Nice.",
+        "I glow softly, spot signals, and look fabulous doing it.",
+        "A little lap through the current. Nice.",
         "Poke acknowledged. Mood: brighter.",
         "Tiny bounce, big signal energy."
     )
@@ -251,14 +244,9 @@ class WigglePetCompanion(
         triggerMood(Mood.HUNTING, attackQuotes.random())
     }
 
-    fun onPortalStarted(ssid: String) {
+    fun onPortalStarted() {
         addExp(20)
-        triggerMood(Mood.COOL, "🎣 Captive Portal live on '$ssid'! Come to papa!")
-    }
-
-    fun onCredentialHarvested(user: String) {
-        addExp(35)
-        triggerMood(Mood.EXCITED, credCapturedQuotes.random())
+        triggerMood(Mood.COOL, portalQuotes.random())
     }
 
     fun onThreatOrSkimmerAlert(threatName: String) {

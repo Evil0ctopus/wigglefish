@@ -1,18 +1,12 @@
 # Wigglefish
 
-Wigglefish is a passive Wi-Fi/BLE field scanner built around an ESP32-C5 and an Android USB controller. It presents live signal telemetry in a neon field-console UI and exports session data for wardriving workflows.
+Wigglefish is a Wi-Fi/BLE field scanner built around an ESP32-C5 and an Android USB controller. Its native Android interface uses original comic-style paintwork, readable signal cards, and five fixed navigation destinations. It can directly control a user-selected compatible BLE RGB light and exports session data for field workflows.
 
 ## Safety Scope
 
-Wigglefish is metadata-only and passive:
+Passive Wi-Fi and BLE surveys are the default. Android only opens the USB serial connection after the user taps **Connect**. The app also includes optional active lab tools that transmit wireless frames or capture management/authentication traffic; these can disrupt nearby equipment. Use them only in an isolated environment with devices and networks you own or are authorized to test.
 
-- It does not join Wi-Fi networks.
-- It does not deauthenticate devices.
-- It does not capture credentials, handshakes, or private payloads.
-- It does not inject wireless frames.
-- It only reports visible Wi-Fi and BLE advertisement metadata.
-
-Use it only where you are authorized to observe wireless signals.
+The captive portal is a clearly labeled connectivity demo. It does not ask for, accept, or store credentials. RGB light control connects only to a compatible BLE light the user explicitly selects and confirms; it does not broadcast light commands to nearby devices or the local network.
 
 ## Features
 
@@ -21,12 +15,14 @@ Use it only where you are authorized to observe wireless signals.
 - Android phone GPS location and GNSS satellites-used count.
 - Optional phone-side Wi-Fi and BLE observations tagged as `PHONE`.
 - Live Wi-Fi, BLE, and GPS counters.
-- Radar HUD with animated sweep, signal blips, scanlines, and glitch effects.
-- Matrix background and transient one-character signal reveal animation.
+- Comic radar with an animated sweep and signal blips (a signal mix, not a geographic map).
+- Four saved paint palettes, springy controls, and original animated Lumi artwork.
+- Recycled signal rows, collapsible tools/reports, compact-screen layouts, and reduced-motion settings.
 - Wi-Fi channel activity and strongest-signal telemetry.
 - Camera-like, AirTag-like, and Flipper-like heuristic categories.
 - JSON session export and WiGLE/WDGWars-style CSV export.
 - Wardrive Go-compatible Wi-Fi fields such as `bssid`, `ssid`, `channel`, `rssi`, and `encryption`.
+- An explicitly launched captive portal demo with no credential form or storage.
 
 ## Repository Layout
 
@@ -60,6 +56,11 @@ The stream is newline-delimited JSON. Examples:
 ```
 
 ## Android App
+
+See [the Android guide](android/README.md) for the comic UI, motion settings,
+and emulator test coverage. The comic preview debug build installs separately
+as `com.wigglefish.android.lumitest`; it does not replace the regular app.
+Website downloads are on [the Projects page](https://evil0ctopus.github.io/projects.html#wigglefish).
 
 Build with the bundled Android SDK and Gradle installation:
 

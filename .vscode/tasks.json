@@ -1,0 +1,21 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Android: verify event UI",
+			"type": "shell",
+			"command": "${workspaceFolder}\\tools\\gradle-8.7\\bin\\gradle.bat",
+			"args": [
+				"-p",
+				"${workspaceFolder}\\android",
+				"assembleDebug",
+				"assembleDebugAndroidTest",
+				"lintDebug",
+				"--console=plain"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}

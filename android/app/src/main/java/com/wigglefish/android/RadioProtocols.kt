@@ -406,7 +406,7 @@ object RadioProtocols {
     }
 
     // -------------------------------------------------------------
-    // Smart RGB Light & Bulb Hijacking Protocols
+    // Smart RGB Light Protocols
     // -------------------------------------------------------------
 
     /**
@@ -469,26 +469,6 @@ object RadioProtocols {
         } else {
             byteArrayOf(0x7E, 0x04, 0x04, 0x00, 0x00, 0x00, 0xFF.toByte(), 0x00, 0xEF.toByte())
         }
-    }
-
-    /**
-     * Builds a MagicHome Wi-Fi LED Controller UDP payload (sent to port 5577).
-     */
-    fun createMagicHomeUdpRgb(r: Int, g: Int, b: Int): ByteArray {
-        val cr = r and 0xFF
-        val cg = g and 0xFF
-        val cb = b and 0xFF
-        val checksum = (0x31 + cr + cg + cb + 0x00 + 0xF0 + 0x0F) and 0xFF
-        return byteArrayOf(
-            0x31,
-            cr.toByte(),
-            cg.toByte(),
-            cb.toByte(),
-            0x00,
-            0xF0.toByte(),
-            0x0F,
-            checksum.toByte()
-        )
     }
 
     /**
